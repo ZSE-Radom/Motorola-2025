@@ -1,7 +1,7 @@
 import time
 import threading
 from tkinter import messagebox
-
+import random
 
 class Mode:    
     def __init__(self, name, gui):
@@ -248,3 +248,38 @@ class ClassicMode(Mode):
             ["P", "P", "P", "P", "P", "P", "P", "P"],
             ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ]
+
+
+class BlitzMode(Mode):
+    def __init__(self, gui):
+        super().__init__("Blitz", gui)
+        self.timer = {"Biały": 60, "Czarny": 60}
+
+    def initialize_board(self):
+        return [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ]
+    
+class X960Mode(Mode):
+    def __init__(self, gui):
+        super().__init__("960", gui)
+
+    #fischer random chess - randomized positions
+    def initialize_board(self):
+        figures = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
+        board = [[" "] * 8 for _ in range(8)]
+        random.shuffle(figures)
+        for i in range(8):
+            board[0][i] = figures[i]
+            board[1][i] = 'p'
+            board[6][i] = 'P'
+            board[7][i] = figures[i].upper()
+
+        return board

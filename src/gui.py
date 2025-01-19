@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-
+from modes import ClassicMode, BlitzMode, X960Mode
 
 class ChessGameGUI:
     def __init__(self, root, mode):
@@ -27,7 +27,7 @@ class ChessGameGUI:
 
         file_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="Opcje", menu=file_menu)
-        file_menu.add_command(label="Nowa gra", command=self.new_game)
+        file_menu.add_command(label="Powrót do menu", command=self.back_to_menu)
         file_menu.add_separator()
         file_menu.add_command(label="Wyjście", command=self.root.quit)
 
@@ -65,3 +65,71 @@ class ChessGameGUI:
 
     def on_click(self, x, y):
         self.mode.on_click(x, y, self.buttons)
+
+    def back_to_menu(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        MainMenuGUI(self.root)
+
+
+class MainMenuGUI:
+    def __init__(self, root):
+        self.root = root
+        self.mode = None
+        self.create_menu()
+
+    def create_menu(self):
+        new_game_btn = tk.Button(self.root, text="Nowa gra offline", command=self.new_offline_game)
+        new_game_btn.grid(row=0, column=0, padx=10, pady=10)
+        #load_game_btn = tk.Button(self.root, text="Wczytaj grę", command=self.load_game)
+        #load_game_btn.grid(row=1, column=0, padx=10, pady=10)
+        exit_btn = tk.Button(self.root, text="Wyjście", command=self.root.quit)
+        exit_btn.grid(row=2, column=0, padx=10, pady=10)
+
+
+    def new_offline_game(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        GameModeSelectionGUI(self.root)
+
+    def show_about(self):
+        messagebox.showinfo("O grze", "Szachy motorola alpha\n Autor: XYZ")
+
+class GameModeSelectionGUI:
+    def __init__(self, root):
+        self.root = root
+        self.create_menu()
+
+    def create_menu(self):
+        classic_btn = tk.Button(self.root, text="Klasyczne szachy", command=self.select_classic_mode)
+        classic_btn.grid(row=0, column=0, padx=10, pady=10)
+        chess960_btn = tk.Button(self.root, text="Szachy 960", command=self.select_chess960_mode)
+        chess960_btn.grid(row=1, column=0, padx=10, pady=10)
+        blitz_btn = tk.Button(self.root, text="Szachy błyskawiczne", command=self.select_blitz_mode)
+        blitz_btn.grid(row=2, column=0, padx=10, pady=10)
+        custom_btn = tk.Button(self.root, text="Własne zasady", command=self.select_custom_mode)
+        custom_btn.grid(row=3, column=0, padx=10, pady=10)
+
+    def select_classic_mode(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        mode = ClassicMode(None)
+        gui = ChessGameGUI(self.root, mode)
+        mode.gui = gui
+
+    def select_chess960_mode(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        mode = X960Mode(None)
+        gui = ChessGameGUI(self.root, mode)
+        mode.gui = gui
+
+    def select_blitz_mode(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        mode = BlitzMode(None)
+        gui = ChessGameGUI(self.root, mode)
+        mode.gui = gui
+
+    def select_custom_mode(self):
+        messagebox.showinfo("Info", "Ta opcja nie jest jeszcze dostępna")

@@ -1,2 +1,4 @@
+# wbudowane w pythona
 tkinter
 threading
+random

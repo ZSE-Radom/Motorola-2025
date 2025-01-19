@@ -1,10 +1,10 @@
 import tkinter as tk
-from modes import ClassicMode
-from gui import ChessGameGUI
+from gui import MainMenuGUI
+
+debug = True
 
 if __name__ == "__main__":
     root = tk.Tk()
-    mode = ClassicMode(None)
-    gui = ChessGameGUI(root, mode)
-    mode.gui = gui
+    root.title("Szachy motorola alpha")
+    MainMenuGUI(root)
     root.mainloop()
