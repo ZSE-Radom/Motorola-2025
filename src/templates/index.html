@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorola srotorola</title>
+    <link rel="stylesheet" href="static/index.css">
+</head>
+<body>
+    <div id="mainmenu">
+        <h1 id="title">Srotorola szachy</h1>
+        <div id="gameModes">
+            <button id="startOffline" onclick="gameStart('offline')">Gra offline</button>
+            <button id="startOnline" onclick="gameStart('online')">Gra online</button>
+            <button id="startBot" onclick="gameStart('bot')">Gra z botem</button>
+            <button id="startBotGM" onclick="gameStart('botGM')">Gra z botem arcymistrzem</button>
+        </div>
+        <div id="bottomButtons">
+            <button id="settings">USTAWIENIA</button>
+            <button id="exit">WYJŚCIE</button>
+        </div>
+    </div>
+    <div id="chessGame">
+        <div id="chessSocial">
+            <div id="chessPfp1"><img src="/static/profiles/8715642fbbded8333534042f40a2a3e4.png"></div>
+            <div id="chessName1">Patyna</div>
+            <div id="chessTimer1"></div>
+            <div id="chessButtons"></div>
+            <div id="chessTimer2"></div>
+            <div id="chessName2">MinerPL</div>
+            <div id="chessPfp2"><img src="/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png"></div>
+        </div>
+        <div id="chessBoard">
+            <div id="chessBoardContainer">
+                <div id="chessBoardFields"></div>
+            </div>
+        </div>
+        <div id="chessStats">
+            <div>Do utworzenia</div>
+        </div>
+    </div>
+    <script src="static/index.js"></script>
+</body>
+</html>
