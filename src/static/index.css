@@ -89,6 +89,8 @@ html, body {
     text-align: center;
     display: flex;
     flex-direction: column;
+    margin: 2%;
+    border-radius: 1rem;
 }
 
 #chessButtons {
@@ -115,8 +117,11 @@ html, body {
 }
 
 #chessStats {
-    width: 25%;
+    margin: 2%;
+    width: 21%;
     background-color: #D2AB99;
+    border-radius: 1rem;
+    text-align: center;
 }
 
 .row {
@@ -147,4 +152,8 @@ html, body {
 }
 .nocolor {
     background-color: unset !important;
+}
+
+.validMove {
+    background-color: #D0A370 !important;
 }

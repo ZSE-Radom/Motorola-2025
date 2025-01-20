@@ -16,17 +16,15 @@ class Mode:
         self.valid_moves = []
         self.start_timer()
         self.last_move = None
+        self.web = False
 
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
-        print(f"Selected piece: {piece} at ({x}, {y})")
 
         if piece == " ":
-            print("No piece selected.")
             return
 
         if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
-            print(f"Cannot move {piece} on {self.current_turn}'s turn.")
             return
 
         directions = {
@@ -52,24 +50,28 @@ class Mode:
 
             if 0 <= x + forward < 8 and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + forward, y))
-                buttons[x + forward][y].config(bg="light blue")
+                if not self.web:
+                    buttons[x + forward][y].config(bg="light blue")
 
             if x == start_row and self.board[x + 2 * forward][y] == " " and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + 2 * forward, y))
-                buttons[x + 2 * forward][y].config(bg="light blue")
+                if not self.web:
+                    buttons[x + 2 * forward][y].config(bg="light blue")
 
             for dx in [-1, 1]:
                 if 0 <= x + forward < 8 and 0 <= y + dx < 8:
                     target = self.board[x + forward][y + dx]
                     if target != " " and target.islower() != piece.islower():
                         self.valid_moves.append((x + forward, y + dx))
-                        buttons[x + forward][y + dx].config(bg="light blue")
+                        if not self.web:
+                            buttons[x + forward][y + dx].config(bg="light blue")
 
             if self.last_move:
                 last_piece, (sx, sy), (ex, ey) = self.last_move
                 if last_piece.lower() == 'p' and abs(sx - ex) == 2 and sy == y and ex == x + forward:
                     self.valid_moves.append((x + forward, y + (1 if sy < y else -1)))
-                    buttons[x + forward][y + (1 if sy < y else -1)].config(bg="light blue")
+                    if not self.web:
+                        buttons[x + forward][y + (1 if sy < y else -1)].config(bg="light blue")
 
         elif piece.lower() in ['r', 'b', 'q']:
             for direction in directions.get(piece.lower(), []):
@@ -80,7 +82,8 @@ class Mode:
                     if self.board[nx][ny] != " " and self.board[nx][ny].islower() == piece.islower():
                         break
                     self.valid_moves.append((nx, ny))
-                    buttons[nx][ny].config(bg="light blue")
+                    if not self.web:
+                        buttons[nx][ny].config(bg="light blue")
 
                     if self.board[nx][ny] != " ":
                         break
@@ -93,17 +96,21 @@ class Mode:
                 nx, ny = x + direction[0], y + direction[1]
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    buttons[nx][ny].config(bg="light blue")
+                    if not self.web:
+                        buttons[nx][ny].config(bg="light blue")
 
         elif piece.lower() == 'k':
             for direction in directions.get(piece.lower(), []):
                 nx, ny = x + direction[0], y + direction[1]
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    buttons[nx][ny].config(bg="light blue")
+                    if not self.web:
+                        buttons[nx][ny].config(bg="light blue")
 
         self.check_for_check()
 
+        if self.web:
+            return self.valid_moves
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
@@ -168,10 +175,9 @@ class Mode:
                 buttons[i][j].config(bg="light gray")
 
     def is_valid_move(self, start, end):
-        print(self.valid_moves)
         if not self.valid_moves:
             return False
-        return end in self.valid_moves
+        return (end[0], end[1]) in self.valid_moves
 
     def is_path_clear(self, start, end, piece):
         sx, sy = start
@@ -205,6 +211,7 @@ class Mode:
         sx, sy = start
         ex, ey = end
         if self.is_valid_move(start, end):
+            print('ruch poprawny!')
             self.board[ex][ey] = self.board[sx][sy]
             self.board[sx][sy] = " "
             self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
