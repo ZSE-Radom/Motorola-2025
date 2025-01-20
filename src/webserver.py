@@ -20,5 +20,12 @@ def start_offline():
         return jsonify('error')
     return jsonify(mode.board, mode.timer)
 
+@app.route('/goodMoves', methods=['GET', 'POST'])
+def good_moves():
+    posx = request.json['posx']
+    posy = request.json['posy']
+    
+    pass
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

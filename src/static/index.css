@@ -85,31 +85,66 @@ html, body {
 
 #chessSocial {
     width: 10%;
+    background-color: #BDBEA9;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+#chessButtons {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.chessName {
+    font-size: 2rem;
 }
 
 #chessSocial img {
     width: 80%;
     margin: 10%;
+    border-radius: 50%;
 }
 
 #chessBoard {
     width: 65%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 #chessStats {
     width: 25%;
+    background-color: #D2AB99;
 }
 
 .row {
     display: flex;
-    height: 12.5%;
-    width: 100%;
+    height: 10%;
 }
 
 .square {
-    width: 12.5%;
-    height: 12.5%;
+    width: 10vh;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #FCF7FF;
+    position: relative;
+}
+.boardNumbers{
+    position: absolute;
+    top: 0.4vh;
+    left: 0.4vh;
+    font-weight: 700;
+}
+.boardLetters{
+    position: absolute;
+    bottom: 0.4vh;
+    right: 0.4vh;
+    font-weight: 700;
+}
+.nocolor {
+    background-color: unset !important;
 }
