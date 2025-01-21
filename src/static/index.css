@@ -138,6 +138,12 @@ html, body {
     background-color: #FCF7FF;
     position: relative;
 }
+
+.square img {
+    width: 80%;
+    height: 80%;
+}
+
 .boardNumbers{
     position: absolute;
     top: 0.4vh;

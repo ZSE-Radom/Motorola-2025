@@ -14,6 +14,7 @@ function gameStart(type) {
             } else {
                 document.getElementById('chessGame').style.display = 'flex';
                 renderChessBoard(data[0], data[1]);
+                setInterval(refreshTimer, 500);
             }
         });
     }
@@ -44,10 +45,19 @@ function createSquare(row, col, piece, letters) {
     const square = document.createElement('div');
     const isLightSquare = (row + col) % 2 === 0;
 
+    const pieceImage = document.createElement('img');
+    //if letter of piece is small
+    if (piece[0] === piece[0].toLowerCase()) {
+        pieceImage.src = `/static/figures/${piece}.svg`;
+    } else {
+        pieceImage.src = `/static/figures/${piece}x.svg`;
+    }
+    
+
     square.className = 'square';
     square.id = row * 8 + col;
     square.style.backgroundColor = isLightSquare ? '#FCF7FF' : '#56876D';
-    square.innerHTML = piece;
+    if (piece !== ' ') square.appendChild(pieceImage);
 
     if (col === 0) {
         const boardNumber = document.createElement('div');
@@ -115,6 +125,26 @@ function executeMove(posx, posy, newPosx, newPosy) {
             alert(data.error);
         } else {
             renderChessBoard(data[0], data[1]);
+        }
+    });
+}
+
+function refreshTimer() {
+    fetch('/stats')
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            if (data[3] == 'true') {
+                updateTimers(data[1]);
+            } else if (data[3] == 'false') {
+                console.log('dddddddddd')
+                document.getElementById('chessGame').style.display = 'none';
+                document.getElementById('mainmenu').style.display = 'flex';
+                alert('Koniec gry! Wygrał gracz ' + data[4]);
+            }
+            document.getElementById('chessTurn').textContent = 'Tura: ' + data[2];
         }
     });
 }

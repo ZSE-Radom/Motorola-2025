@@ -17,6 +17,7 @@ class Mode:
         self.start_timer()
         self.last_move = None
         self.web = False
+        self.winner = None
 
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
@@ -158,6 +159,7 @@ class Mode:
                 winner = self.check_winner()
                 if winner:
                     messagebox.showinfo("Koniec gry!", winner)
+                    self.winner = winner
                     self.running = False
                     self.gui.root.quit()
             self.selected_piece = None
@@ -216,12 +218,16 @@ class Mode:
             self.board[sx][sy] = " "
             self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
             self.move_history.append(f"{self.board[ex][ey]}: {start} -> {end}")
+            self.check_winner()
 
     def check_winner(self):
         pieces = "".join("".join(row) for row in self.board)
+        self.running = False
         if "k" not in pieces:
+            self.winner = "Biały"
             return "Biały wygrał!"
         if "K" not in pieces:
+            self.winner = "Czarny"
             return "Czarny wygrał!"
         return None
 
@@ -233,8 +239,9 @@ class Mode:
                 if self.timer[self.current_turn] <= 0:
                     self.running = False
                     winner = "Czarny" if self.current_turn == "Biały" else "Biały"
-                    messagebox.showinfo("Koniec czasu!", f"{winner} wygrał na czas!")
-                    self.gui.root.quit()
+                    if not self.web:
+                        messagebox.showinfo("Koniec czasu!", f"{winner} wygrał na czas!")
+                        self.gui.root.quit()
 
         threading.Thread(target=timer_thread, daemon=True).start()
 

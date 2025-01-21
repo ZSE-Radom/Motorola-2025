@@ -32,7 +32,17 @@ def start_offline():
     modes_store[session_id] = mode_instance
     mode_instance.web = True
 
-    return jsonify(mode_instance.board, mode_instance.timer)
+    return jsonify(mode_instance.board, mode_instance.timer, mode_instance.current_turn, mode_instance.running, mode_instance.winner)
+
+
+@app.route('/stats', methods=['GET'])
+def stats():
+    session_id = session.get('session_id')
+    if not session_id or session_id not in modes_store:
+        return jsonify({'error': 'Game session not found'}), 400
+
+    mode_instance = modes_store[session_id]
+    return jsonify(mode_instance.board, mode_instance.timer, mode_instance.current_turn, mode_instance.running, mode_instance.winner)
 
 
 @app.route('/move', methods=['POST'])
@@ -51,7 +61,7 @@ def move():
 
     print(mode_instance.board)
 
-    return jsonify(mode_instance.board, mode_instance.timer)
+    return jsonify(mode_instance.board, mode_instance.timer, mode_instance.current_turn, mode_instance.running, mode_instance.winner)
 
 
 @app.route('/goodMoves', methods=['POST'])
