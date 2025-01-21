@@ -149,4 +149,10 @@ function refreshTimer() {
     });
 }
 
+function displayErrorPopUp() {
+    const errorPopUp = document.getElementById('errorPopUp');
+    errorPopUp.style.display = 'block';
+    setTimeout(() => errorPopUp.style.display = 'none', 5000);
+}
+
 gameStart('offline');
