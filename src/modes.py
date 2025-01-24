@@ -2,6 +2,7 @@ import time
 import threading
 from tkinter import messagebox
 import random
+import os
 
 class Mode:    
     def __init__(self, name, gui):
@@ -18,6 +19,10 @@ class Mode:
         self.last_move = None
         self.web = False
         self.winner = None
+        self.game_type = "offline" #offline and so
+        self.game_mode = "" #classic and so
+        self.first_player_name = os.getlogin()
+        self.second_player_name = "Dupa"
 
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
@@ -115,6 +120,17 @@ class Mode:
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
+    
+
+    def check_checkmate(self):
+        for i in range(8):
+            for j in range(8):
+                if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
+                    self.current_turn == "Czarny" and self.board[i][j].islower()):
+                    self.highlight_moves(i, j, None)
+                    if self.valid_moves:
+                        return False
+        return True
 
 
     def check_for_check(self):
@@ -128,17 +144,21 @@ class Mode:
             return
 
         x, y = king_position
-        opponent_pieces = 'rnbqkp' if self.current_turn == "Biały" else 'RNBQKP'
+        opponent_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
+
         for i in range(8):
             for j in range(8):
                 piece = self.board[i][j]
-                if piece in opponent_pieces:
-                    if self.is_valid_move((i, j), (x, y)):
+                if (opponent_turn == "Biały" and piece.isupper()) or (opponent_turn == "Czarny" and piece.islower()):
+                    self.highlight_moves(i, j, None)
+                    if (x, y) in self.valid_moves:
                         self.show_check_warning()
                         return
+
         
     def show_check_warning(self):
         messagebox.showwarning("Szach", "Jesteś szachowany!")
+
 
     def prompt_promotion(self):
         promotion = messagebox.askquestion("Promocja piona", "Wypromować na królową?")
@@ -171,15 +191,24 @@ class Mode:
                 self.selected_piece = (x, y)
                 self.highlight_moves(x, y, buttons)
 
+
+    def prompt_promotion(self):
+        promotion_options = ['Q', 'R', 'B', 'N']
+        selected = messagebox.askquestion("Promocja piona", "Wybierz figurę: Q, R, B, N")
+        return (selected if selected in promotion_options else 'Q') if self.current_turn == 'Biały' else selected.lower()
+
+
     def reset_highlights(self, buttons):
         for i in range(8):
             for j in range(8):
                 buttons[i][j].config(bg="light gray")
 
+
     def is_valid_move(self, start, end):
         if not self.valid_moves:
             return False
         return (end[0], end[1]) in self.valid_moves
+    
 
     def is_path_clear(self, start, end, piece):
         sx, sy = start
@@ -208,28 +237,58 @@ class Mode:
                         return False
 
         return True
+    
 
     def move_piece(self, start, end):
         sx, sy = start
         ex, ey = end
+        piece = self.board[sx][sy]
+
         if self.is_valid_move(start, end):
-            print('ruch poprawny!')
-            self.board[ex][ey] = self.board[sx][sy]
+            self.board[ex][ey] = piece
             self.board[sx][sy] = " "
+            self.last_move = (piece, start, end)
             self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
-            self.move_history.append(f"{self.board[ex][ey]}: {start} -> {end}")
+            self.move_history.append(f"{piece}: {start} -> {end}")
+
+            if piece.lower() == 'p' and (ex == 0 or ex == 7):
+                self.board[ex][ey] = self.prompt_promotion()
+
+            if self.check_checkmate():
+                self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+                messagebox.showinfo("Koniec gry!", f"Szach mat! {self.winner} wygrał!")
+                self.running = False
+
+            self.check_for_check()
+
             self.check_winner()
+
 
     def check_winner(self):
         pieces = "".join("".join(row) for row in self.board)
-        self.running = False
         if "k" not in pieces:
             self.winner = "Biały"
+            self.running = False
             return "Biały wygrał!"
         if "K" not in pieces:
             self.winner = "Czarny"
+            self.running = False
             return "Czarny wygrał!"
         return None
+
+
+    def resign(self):
+        self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+        self.running = False
+
+
+    def draw(self):
+        if self.game_type == "offline":
+            self.winner = "Remis"
+            self.running = False
+        else:
+            print('zaimplementuj remis') #TODO
+
 
     def start_timer(self):
         def timer_thread():
@@ -238,11 +297,12 @@ class Mode:
                 self.timer[self.current_turn] -= 1
                 if self.timer[self.current_turn] <= 0:
                     self.running = False
-                    winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+                    self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
                     if not self.web:
-                        messagebox.showinfo("Koniec czasu!", f"{winner} wygrał na czas!")
+                        messagebox.showinfo("Koniec czasu!", f"{self.winner} wygrał na czas!")
                         self.gui.root.quit()
-
+                    return
+                
         threading.Thread(target=timer_thread, daemon=True).start()
 
 
@@ -250,6 +310,7 @@ class Mode:
 class ClassicMode(Mode):
     def __init__(self, gui):
         super().__init__("Classic", gui)
+        self.game_mode = "Klasyczny"
 
     def initialize_board(self):
         return [
@@ -268,6 +329,7 @@ class BlitzMode(Mode):
     def __init__(self, gui):
         super().__init__("Blitz", gui)
         self.timer = {"Biały": 60, "Czarny": 60}
+        self.game_mode = "Blitz"
 
     def initialize_board(self):
         return [
@@ -284,6 +346,7 @@ class BlitzMode(Mode):
 class X960Mode(Mode):
     def __init__(self, gui):
         super().__init__("960", gui)
+        self.game_mode = "Fischer Losowy"
 
     #fischer random chess - randomized positions
     def initialize_board(self):

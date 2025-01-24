@@ -13,6 +13,9 @@
 html, body {
     height: 100%;
     width: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
 }
 
 #title {
@@ -94,8 +97,22 @@ html, body {
 }
 
 #chessButtons {
-    margin-top: auto;
-    margin-bottom: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+
+}
+
+#chessButtons button {
+    width: 100%;
+    margin: 1rem 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 1rem;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    border: none;
 }
 
 .chessName {
@@ -174,4 +191,100 @@ html, body {
     border-radius: 1rem;
     padding: 2rem;
     z-index: 1;
+}
+
+#errorPopUp button {
+    font-size: 2rem;
+    border: none;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: none;
+    margin: 1rem;
+}
+
+#errorPopUpText {
+    font-size: 2rem;
+}
+
+#infoPopUp {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #D2AB99;
+    border-radius: 1rem;
+    padding: 2rem;
+    z-index: 1;
+}
+
+#infoPopUp button {
+    font-size: 2rem;
+    border: none;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: none;
+    margin: 1rem;
+}
+
+#infoPopUpText {
+    font-size: 2rem;
+}
+
+.popup {
+    position: fixed;
+    right: 30px;
+    top: 30px;
+    max-width: 500px;
+    padding: 40px;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    display: none;
+    z-index: 1000;
+}
+.popup h3 {
+    margin: 0;
+    font-size: 18px;
+}
+.popup p {
+    margin: 10px 0 0;
+    font-size: 14px;
+}
+.popup button {
+    margin-top: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.popup.error {
+    border-color: #ff4d4d;
+}
+.popup.info {
+    border-color: #4d94ff;
+}
+
+#modeList {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 1rem;
+    padding: 2rem;
+    z-index: 1;
+}
+
+.modeBtn {
+    font-size: 2rem;
+    border: none;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: none;
+    margin: 1rem;
 }

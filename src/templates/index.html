@@ -15,6 +15,7 @@
             <button id="startBot" onclick="gameStart('bot')">Gra z botem</button>
             <button id="startBotGM" onclick="gameStart('botGM')">Gra z botem arcymistrzem</button>
         </div>
+        <div id="modeList"><h1>Wybierz tryb gry</h1><div id="modeBtns"></div></div>
         <div id="bottomButtons">
             <button id="settings">USTAWIENIA</button>
             <button id="exit">WYJŚCIE</button>
@@ -25,7 +26,11 @@
             <div id="chessPfp2"><img src="/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png"></div>
             <div class="chessName" id="chessName2">MinerPL</div>
             <div id="chessTimer2"></div>
-            <div id="chessButtons"></div>
+            <div id="chessButtons">
+                <button id="chessResign" onclick="resign();">REZYGNACJA</button>
+                <button id="chessDraw" onclick="draw();">REMIS</button>
+                <button id="chessExit" onclick="exit();">WYJŚCIE</button>
+            </div>
             <div id="chessTimer1"></div>
             <div class="chessName" id="chessName1">Patyna</div>
             <div id="chessPfp1"><img src="/static/profiles/8715642fbbded8333534042f40a2a3e4.png"></div>
@@ -36,14 +41,43 @@
             </div>
         </div>
         <div id="chessStats">
-            <div id="chessTurn"></div>
-            <div>Do utworzenia</div>
+            <div id="chessGameTypeStat">
+                <h3>Typ gry</h3>
+                <div id="chessGameType"></div>
+            </div>
+            <div id="chessTurnStat">
+                <h3>Obecnie gra</h3>
+                <div id="chessTurn"></div>
+            </div>
+            <div id="chessMistakesStat">
+                <h3>Błędy</h3>
+                <div id="chessMistakes"></div>
+            </div>
+            <div id="chessPrecipitatesStat">
+                <h3>Strącenia</h3>
+                <div id="chessPrecipitates"></div>
+            </div>
+            <div id="chessLogStat">
+                <h3>Log</h3>
+                <div id="chessLog"></div>
+            </div>
+            <div id="chessButtonsStat">
+                <button id="chessDownloadHistory"></button>
+                <button id="chessDownloadLog"></button>
+                <button id="chessNerdView"></button>
+            </div>
         </div>
     </div>
     <div id="errorPopUp">
         <div id="errorPopUpContent">
             <div id="errorPopUpText">Błąd połączenia</div>
-            <button id="errorPopUpButton">OK</button>
+            <button id="errorPopUpButton" onclick="closeErrorPopUp()">OK</button>
+        </div>
+    </div>
+    <div id="infoPopUp">
+        <div id="infoPopUpContent">
+            <div id="infoPopUpText">Informacja</div>
+            <button id="infoPopUpButton" onclick="closeInfoPopUp()">OK</button>
         </div>
     </div>
     <script src="static/index.js"></script>
