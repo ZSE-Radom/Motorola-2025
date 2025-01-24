@@ -246,10 +246,12 @@ html, body {
 .popup h3 {
     margin: 0;
     font-size: 18px;
+    color: white;
 }
 .popup p {
     margin: 10px 0 0;
     font-size: 14px;
+    color: white;
 }
 .popup button {
     margin-top: 10px;
