@@ -10,6 +10,7 @@
     font-family: 'GameFont';
     user-select: none;
     overflow: hidden;
+    will-change: transform;
 }
 
 html, body {
@@ -18,6 +19,11 @@ html, body {
     top: 0;
     left: 0;
     position: absolute;
+}
+
+#mainmenu {
+    height: 100%;
+    width: 100%;
 }
 
 #header {
