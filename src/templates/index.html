@@ -6,16 +6,51 @@
     <title>Motorola srotorola</title>
     <link rel="stylesheet" href="static/index.css">
 </head>
+<!--<body oncontextmenu="return false"> TODO: dodać to przed oddaniem projektu -->
 <body>
     <div id="mainmenu">
-        <h1 id="title">Srotorola szachy</h1>
-        <div id="gameModes">
-            <button id="startOffline" onclick="gameStart('offline')">Gra offline</button>
-            <button id="startOnline" onclick="gameStart('online')">Gra online</button>
-            <button id="startBot" onclick="gameStart('bot')">Gra z botem</button>
-            <button id="startBotGM" onclick="gameStart('botGM')">Gra z botem arcymistrzem</button>
+        <div id="header">
+            <h1 id="title">Srotorola szachy</h1>
+            <div id="profile">
+                <div id="profilePfp"><img src="/static/profiles/8715642fbbded8333534042f40a2a3e4.png"></div>
+                <div>
+                    <div id="profileName">username</div>
+                    <div id="profileRank">ELO: 1200</div>
+                </div>
+            </div>
         </div>
-        <div id="modeList"><h1>Wybierz tryb gry</h1><div id="modeBtns"></div></div>
+        <div id="gameModes">
+            <button id="startOffline" onclick="gameStart('Offline')">Gra offline</button>
+            <button id="startOnline" onclick="gameStart('Online')">Gra online</button>
+            <button id="startBot" onclick="gameStart('Bot')">Gra z botem</button>
+            <button id="startBotGM" onclick="gameStart('BotGM')">Gra z botem arcymistrzem</button>
+        </div>
+        <div id="modeList"><div style="display: flex;"><h1>Wybierz tryb gry</h1><h1 id="close" onclick="closeModes();">X</h1></div><div id="modeBtns"></div></div>
+        <div id="feed">
+            <h2 id="feedTitle">Aktualności</h2>
+            <div id="feedContent">
+                <div class="feedItem" id="feedItem1">
+                    <div class="feedItemTitle">Zagraj z SochAI</div>
+                    <div class="feedItemContent">Nasza najnowsza Sztuczna Głupota</div>
+                </div>
+                <div class="feedItem" id="feedItem2">
+                    <div class="feedItemTitle">Sponsor główny</div>
+                    <div class="feedItemContent">Szymon Srochaj i jego firma</div>
+                </div>
+                <div class="feedItem" id="feedItem3">
+                    <div class="feedItemTitle">Zgadnij liczbę</div>
+                    <div class="feedItemContent">Nasza rewolucyjna gra</div>
+                </div>
+                <div class="feedItem" id="feedItem4">
+                    <div class="feedItemTitle">Zagraj z MatiuuAI</div>
+                    <div class="feedItemContent">Mądrzejszy model szachowy</div>
+                </div>
+                <div class="feedItem" id="feedItem5">
+                    <div class="feedItemTitle">Odkryj nasze inne gry</div>
+                    <div class="feedItemContent">Tworzymy ich wiele...</div>
+                </div>
+            </div>        
+        </div>
         <div id="bottomButtons">
             <button id="settings">USTAWIENIA</button>
             <button id="exit">WYJŚCIE</button>
@@ -79,6 +114,12 @@
             <div id="infoPopUpText">Informacja</div>
             <button id="infoPopUpButton" onclick="closeInfoPopUp()">OK</button>
         </div>
+    </div>
+    <div id="loading">
+        <div id="lobar">
+            <img src="/static/loading.gif">
+        </div>
+        <div id="loinfo">Wczytuję...</div>
     </div>
     <script src="static/index.js"></script>
 </body>

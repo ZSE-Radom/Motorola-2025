@@ -1,7 +1,7 @@
 let popUpCount = 0;
 
 function gameStart(type) {
-    if (type === 'offline') {
+    if (type === 'Offline') {
         fetch('/listModes', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
@@ -13,12 +13,14 @@ function gameStart(type) {
             } else {
                 document.getElementById('modeList').style.display = 'block';
                 const modeList = document.getElementById('modeBtns');
+                const button = document.getElementById(`start${type}`);
+                button.classList.add('active')
                 modeList.innerHTML = '';
                 data.modes.forEach(mode => {
                     const modeButton = document.createElement('button');
                     modeButton.textContent = mode;
                     modeButton.className = 'modeBtn';
-                    modeButton.addEventListener('click', () => startOfflineGame(mode));
+                    modeButton.addEventListener('click', () => startGame('Offline', mode));
                     modeList.appendChild(modeButton);
                 });
             }
@@ -26,27 +28,36 @@ function gameStart(type) {
     }
 }
 
-function startOfflineGame(mode) {
-    document.getElementById('mainmenu').style.display = 'none';
-    fetch('/startOffline', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            createPopUp('error', 'Błąd z połączeniem', data.error);
-        } else {
-            document.getElementById('chessGame').style.display = 'flex';
-            initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-            renderChessBoard(data.board, data.timer);
-            setInterval(refreshTimer, 500);
+function startGame(type, mode) {
+    animateMainMenu('close');
+    setTimeout(() => {
+        document.getElementById('modeList').style.display = 'none';
+        document.getElementById('mainmenu').style.display = 'none';
+        document.getElementById(`start${type}`).classList.remove('active');
+        if (type === 'Offline') {
+            fetch('/startOffline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    createPopUp('error', 'Błąd z połączeniem', data.error);
+                } else {
+                    document.getElementById('modeList').style.display = 'none';
+                    document.getElementById('chessGame').style.display = 'flex';
+                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                    renderChessBoard(data.board, data.timer);
+                    setInterval(refreshTimer, 500);
+                }
+            });
         }
-    });
+    }, 1500);
 }
 
 function renderChessBoard(boardData, time) {
+    document.getElementById('chessGame').style.display = 'flex';
     const chessBoard = document.getElementById('chessBoard');
     const letters = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
 
@@ -65,6 +76,7 @@ function renderChessBoard(boardData, time) {
     }
 
     updateTimers(time);
+    animateChessBoard('open');
 }
 
 function createSquare(row, col, piece, letters) {
@@ -163,9 +175,13 @@ function refreshTimer() {
             if (data.running === true) {
                 updateTimers(data.timer);
             } else {
-                document.getElementById('chessGame').style.display = 'none';
-                document.getElementById('mainmenu').style.display = 'flex';
-                createPopUp('info', 'Koniec gry', 'Wygrał gracz ' + data.winner);
+                animateChessBoard('close');
+                setTimeout(() => {
+                    document.getElementById('chessGame').style.display = 'none';
+                    animateMainMenu('open');
+                    document.getElementById('mainmenu').style.display = 'block';
+                    createPopUp('info', 'Koniec gry', 'Wygrał gracz ' + data.winner);
+                }, 1500);
             }
             document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
         }
@@ -190,8 +206,11 @@ function createPopUp(type, title, content) {
 
     setTimeout(() => {
         if (popUp.parentNode) {
-            popUp.remove();
-            popUpCount--;
+            popUp.style.animation = 'slideleft-popup 1s cubic-bezier(0.075, 0.82, 0.165, 1)';
+            setTimeout(() => {
+                popUp.remove();
+                popUpCount--;
+            }, 900);
         }
     }, 5000);
 }
@@ -199,8 +218,11 @@ function createPopUp(type, title, content) {
 function closePopUp(button) {
     const popUp = button.parentNode;
     if (popUp.parentNode) {
-        popUp.remove();
-        popUpCount--;
+        popUp.style.animation = 'slideleft-popup 1s cubic-bezier(0.075, 0.82, 0.165, 1)';
+        setTimeout(() => {
+            popUp.remove();
+            popUpCount--;
+        }, 900);
     }
 }
 
@@ -220,9 +242,13 @@ function resign() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
-            document.getElementById('chessGame').style.display = 'none';
-            document.getElementById('mainmenu').style.display = 'flex';
-            createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, jego przeciwnik się poddał!');
+            animateChessBoard('close');
+            setTimeout(() => {
+                document.getElementById('chessGame').style.display = 'none';
+                animateMainMenu('open');
+                document.getElementById('mainmenu').style.display = 'block';
+                createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, jego przeciwnik się poddał!');
+            }, 1500);
         }
     });
 }
@@ -241,9 +267,83 @@ function draw() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
-            document.getElementById('chessGame').style.display = 'none';
-            document.getElementById('mainmenu').style.display = 'flex';
-            createPopUp('info', 'Koniec gry', 'Remis!');
+            animateChessBoard('close');
+            setTimeout(() => {
+                document.getElementById('chessGame').style.display = 'none';
+                animateMainMenu('open');
+                document.getElementById('mainmenu').style.display = 'block';
+                createPopUp('info', 'Koniec gry', 'Remis!');
+            }, 1500);
         }
     });
+}
+
+function closeModes() {
+    document.getElementById('modeList').style.display = 'none';
+    const collection = document.getElementsByClassName("active"); 
+    for (const c of collection) {
+        c.classList.remove('active');
+    }
+}
+
+const slider = document.querySelector('#feed');
+let mouseDown = false;
+let startX, scrollLeft;
+let startDragging = function (e) {
+    mouseDown = true;
+    startX = e.pageX - slider.offsetLeft;
+    scrollLeft = slider.scrollLeft;
+};
+
+let stopDragging = function (event) {
+    mouseDown = false;
+};
+
+slider.addEventListener('mousemove', (e) => {
+    e.preventDefault();  if(!mouseDown) {
+        return;
+    }
+    const x = e.pageX - slider.offsetLeft;
+    const scroll = x - startX;
+    slider.scrollLeft = scrollLeft - scroll;
+});
+
+slider.addEventListener('mousedown', startDragging, false);
+slider.addEventListener('mouseup', stopDragging, false);
+slider.addEventListener('mouseleave', stopDragging, false);
+
+window.onload = function(){
+    document.getElementById('loading').style.opacity = '0';
+    animateMainMenu('open');
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+    }, 1000);
+}; 
+
+function animateMainMenu(type) {
+    if (type === 'open') {
+        document.getElementById('header').style.animation = "slideup-center 1.6s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('gameModes').style.animation = "slideup-center 2.4s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('feed').style.animation = "slideup-center 3.2s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('bottomButtons').style.animation = "slideup-center 4s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('modeList').style.animation = "slideup-translate-center 1.5s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    } else if (type === 'close') {
+        document.getElementById('header').style.animation = "slidedown-center 1.6s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('gameModes').style.animation = "slidedown-center 2.4s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('feed').style.animation = "slidedown-center 3.2s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('bottomButtons').style.animation = "slidedown-center 4s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('modeList').style.animation = "slidedown-translate-center 1.5s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    }
+}
+
+function animateChessBoard(type) {
+    if (type === 'open') {
+        document.getElementById('chessSocial').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessStats').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    } else if (type === 'close') {
+        document.getElementById('chessSocial').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessBoard').style.animation = "slidedown-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessStats').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    }
 }
