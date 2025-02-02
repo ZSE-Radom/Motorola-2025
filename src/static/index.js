@@ -1,6 +1,7 @@
 let popUpCount = 0;
 let username = '';
 let setupOptions = {};
+let currentlyPlaying = false;
 
 function fetchProfile() {
     fetch('/profile', {
@@ -349,6 +350,7 @@ function refreshTimer() {
 }
 
 function createPopUp(type, title, content) {
+    document.getElementById('notifySound').play();
     popUpCount++;
 
     const popUp = document.createElement('div');
@@ -584,3 +586,15 @@ function playSoundtrack() {
 function nowPlaying(name) {
     createPopUp('info', '🎶Odtwarzanie', 'Teraz gra: ' + name + '<br>Utworzone przez: Patyna');
 }
+
+document.addEventListener('click', (e) => {
+    // if is button
+    if (e.target.tagName === 'BUTTON') {
+        document.getElementById('btnClickSound').play();
+    }
+    currentlyPlaying = true;
+    document.getElementById('clickSound').play();
+    setTimeout(() => {
+        currentlyPlaying = false;
+    }, 100);
+});
