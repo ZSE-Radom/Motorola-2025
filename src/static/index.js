@@ -475,6 +475,17 @@ function checkForEvents() {
                             unsetIntervals();
                         }, 5000);
                     }, 1500);
+                } else if (event === 'end') {
+                    animateChessBoard('close');
+                    setTimeout(() => {
+                        document.getElementById('chessGame').style.display = 'none';
+                        animateMainMenu('open');
+                        document.getElementById('mainmenu').style.display = 'block';
+                        createPopUp('info', 'Koniec gry', 'Gra została zakończona!');
+                        setTimeout(() => {
+                            unsetIntervals();
+                        }, 5000);
+                    }, 1500);
                 } else {
                     createPopUp('info', 'Zdarzenie', event);
                 }
@@ -551,7 +562,7 @@ function animateChessBoard(type) {
 }
 
 function playSoundtrack() {
-    const songs = ['Ballada o Stańczyku', 'F-Cloud Song', 'Srochaj Anime Opening'];
+    const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
     let currentSongIndex = Math.floor(Math.random() * songs.length);
     const audio = new Audio(`/static/soundtrack/${songs[currentSongIndex]}.mp3`);
     audio.loop = false;

@@ -273,10 +273,12 @@ class Mode:
         if "k" not in pieces:
             self.winner = "Biały"
             self.running = False
+            add_event(self.session_id, 'end')
             return "Biały wygrał!"
         if "K" not in pieces:
             self.winner = "Czarny"
             self.running = False
+            add_event(self.session_id, 'end')
             return "Czarny wygrał!"
         return None
 
