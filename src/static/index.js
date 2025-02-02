@@ -1,6 +1,27 @@
 let popUpCount = 0;
+let username = '';
+let setupOptions = {};
+
+function fetchProfile() {
+    fetch('/profile', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            createPopUp('error', 'Błąd z połączeniem', data.error);
+        } else {
+            username = data.username;
+            document.getElementById('profileName').innerHTML = data.name;
+            document.getElementById('profileRank').innerHTML = "RANK  " + data.elo;
+            document.getElementById('profilePfpSrc').src = '/static/profiles/' + data.pfp;
+        }
+    }); 
+}
 
 function gameStart(type) {
+    /** 
     if (type === 'Offline') {
         fetch('/listModes', {
             method: 'GET',
@@ -25,7 +46,7 @@ function gameStart(type) {
                 });
             }
         });
-    }
+    }*/
 }
 
 function startGame(type, mode) {
@@ -50,10 +71,155 @@ function startGame(type, mode) {
                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                     renderChessBoard(data.board, data.timer);
                     setInterval(refreshTimer, 500);
+                    setInterval(checkForEvents, 500);
                 }
             });
         }
     }, 1500);
+}
+
+function unsetIntervals() {
+    clearInterval(refreshTimer);
+    clearInterval(checkForEvents);
+}
+
+function renderSetup(game_type) {
+    let boardData;
+    if (game_type === 'human') {
+        document.getElementById('chessStats').style.display = 'none';
+        document.getElementById('chessSocial').style.display = 'none';
+        document.getElementById('chessSetupHuman').style.display = 'none';
+        document.getElementById('chessBoard').style.display = 'none';
+        animateMainMenu('close');
+        fetch('/getBoardLook', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                createPopUp('error', 'Błąd z połączeniem', data.error);
+            } else {
+                boardData = data.board;
+                renderChessBoard(boardData, 0);
+                const options = ["Na tym komputerze (gra offline)", "Na innym komputerze (gra online)"];
+                const colors = ["#FC6471", "#7D5BA6"];
+                const toggle = document.getElementById("toggle");
+                const slider = toggle.querySelector(".slider");
+                const labelsContainer = toggle.querySelector(".labels");
+                setupOptions['game_type'] = 'offline';
+                
+                toggle.style.setProperty("--options", options.length);
+
+                labelsContainer.innerHTML = '';
+                
+                options.forEach((option, index) => {
+                    const label = document.createElement("span");
+                    label.textContent = option;
+                    label.dataset.index = index;
+                    labelsContainer.appendChild(label);
+                });
+                
+                let currentIndex = 0;
+                function updateSlider() {
+                    slider.style.left = `${(100 / options.length) * currentIndex}%`;
+                    slider.style.background = colors[currentIndex];
+                }
+                
+                toggle.addEventListener("click", () => {
+                    currentIndex = (currentIndex + 1) % options.length;
+                    updateSlider();
+                    if (currentIndex === 0) {
+                        setupOptions['game_type'] = 'offline';
+                    } else if (currentIndex === 1) {
+                        createPopUp('info', 'Informacja', 'Gra online jest w trakcie tworzenia!');
+                        setupOptions['game_type'] = 'online';
+                    }
+                });
+
+                fetch('/listModes', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }).then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.error) {
+                        createPopUp('error', 'Błąd z połączeniem', data.error);
+                    } else {
+                        document.getElementById('chessSetupField2Content').innerHTML = '';
+                        for (const mode of data.modes) {
+                            const modeButton = document.createElement('button');
+                            modeButton.textContent = mode;
+                            modeButton.className = 'modeBtn';
+                            document.getElementById('chessSetupField2Content').appendChild(modeButton);
+                            modeButton.onclick = function() {
+                                setupOptions['game_mode'] = mode;
+                                modeButton.classList.add('active');
+                                for (const child of modeButton.parentNode.children) {
+                                    if (child !== modeButton) {
+                                        child.classList.remove('active');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                updateSlider();
+                setTimeout(() => {
+                    document.getElementById('mainmenu').style.display = 'none';
+                    document.getElementById('chessGame').style.display = 'flex';
+                    document.getElementById('chessSetupHuman').style.display = 'block';
+                    document.getElementById('chessBoard').style.display = 'flex';
+                    animateChessBoard('setup');
+                }, 1500);
+
+                document.getElementById('chessGameStartButton').onclick = function() {
+                    if (setupOptions['game_mode'] === undefined) {
+                        createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
+                    } else {
+                        fetch('/startOffline', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(setupOptions)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.error) {
+                                createPopUp('error', 'Błąd z połączeniem', data.error);
+                            } else {
+                                document.getElementById('chessSetupHuman').animate([
+                                    { transform: 'translateY(0)' },
+                                    { transform: 'translateY(-100%)' }
+                                ], {
+                                    duration: 1000,
+                                    easing: 'ease-in-out'
+                                });
+                                document.getElementById('chessBoard').animate([
+                                    { transform: 'translateX(0)' },
+                                    { transform: 'translateX(-25%)' }
+                                ], {
+                                    duration: 1000,
+                                    easing: 'ease-in-out'
+                                });
+                                setTimeout(() => {
+                                    document.getElementById('chessSetupHuman').style.display = 'none';
+                                    document.getElementById('chessGame').style.display = 'flex';
+                                    document.getElementById('chessSocial').style.display = 'block';
+                                    document.getElementById('chessStats').style.display = 'block';
+                                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                                    renderChessBoard(data.board, data.timer);
+                                    setInterval(refreshTimer, 500);
+                                    setInterval(checkForEvents, 500);
+                                }, 1000);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    } else if (game_type === 'bot') {
+        createPopUp('info', 'Informacja', 'Gra z botem jest w trakcie tworzenia!');   
+    }
 }
 
 function renderChessBoard(boardData, time) {
@@ -76,7 +242,7 @@ function renderChessBoard(boardData, time) {
     }
 
     updateTimers(time);
-    animateChessBoard('open');
+    animateChessBoard('game');
 }
 
 function createSquare(row, col, piece, letters) {
@@ -175,13 +341,7 @@ function refreshTimer() {
             if (data.running === true) {
                 updateTimers(data.timer);
             } else {
-                animateChessBoard('close');
-                setTimeout(() => {
-                    document.getElementById('chessGame').style.display = 'none';
-                    animateMainMenu('open');
-                    document.getElementById('mainmenu').style.display = 'block';
-                    createPopUp('info', 'Koniec gry', 'Wygrał gracz ' + data.winner);
-                }, 1500);
+                return 'OK';
             }
             document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
         }
@@ -242,13 +402,7 @@ function resign() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
-            animateChessBoard('close');
-            setTimeout(() => {
-                document.getElementById('chessGame').style.display = 'none';
-                animateMainMenu('open');
-                document.getElementById('mainmenu').style.display = 'block';
-                createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, jego przeciwnik się poddał!');
-            }, 1500);
+            return 'OK';
         }
     });
 }
@@ -267,13 +421,7 @@ function draw() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
-            animateChessBoard('close');
-            setTimeout(() => {
-                document.getElementById('chessGame').style.display = 'none';
-                animateMainMenu('open');
-                document.getElementById('mainmenu').style.display = 'block';
-                createPopUp('info', 'Koniec gry', 'Remis!');
-            }, 1500);
+            return 'OK';
         }
     });
 }
@@ -284,6 +432,55 @@ function closeModes() {
     for (const c of collection) {
         c.classList.remove('active');
     }
+}
+
+function checkForEvents() {
+    fetch('/events')
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            createPopUp('error', 'Błąd z połączeniem', data.error);
+        } else {
+            for (const event of data.events) {
+                if (event === 'resign') {
+                    animateChessBoard('close');
+                    setTimeout(() => {
+                        document.getElementById('chessGame').style.display = 'none';
+                        animateMainMenu('open');
+                        document.getElementById('mainmenu').style.display = 'block';
+                        createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, jego przeciwnik się poddał!');
+                        setTimeout(() => {
+                            unsetIntervals();
+                        }, 5000);
+                    }, 1500);
+                } else if (event === 'draw') {
+                    animateChessBoard('close');
+                    setTimeout(() => {
+                        document.getElementById('chessGame').style.display = 'none';
+                        animateMainMenu('open');
+                        document.getElementById('mainmenu').style.display = 'block';
+                        createPopUp('info', 'Koniec gry', 'Remis!');
+                        setTimeout(() => {
+                            unsetIntervals();
+                        }, 5000);
+                    }, 1500);
+                } else if (event === 'time_over') {
+                    animateChessBoard('close');
+                    setTimeout(() => {
+                        document.getElementById('chessGame').style.display = 'none';
+                        animateMainMenu('open');
+                        document.getElementById('mainmenu').style.display = 'block';
+                        createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, czas drugiego gracza minął!');
+                        setTimeout(() => {
+                            unsetIntervals();
+                        }, 5000);
+                    }, 1500);
+                } else {
+                    createPopUp('info', 'Zdarzenie', event);
+                }
+            }
+        }
+    });
 }
 
 const slider = document.querySelector('#feed');
@@ -312,12 +509,15 @@ slider.addEventListener('mousedown', startDragging, false);
 slider.addEventListener('mouseup', stopDragging, false);
 slider.addEventListener('mouseleave', stopDragging, false);
 
+fetchProfile();
+
 window.onload = function(){
     document.getElementById('loading').style.opacity = '0';
     animateMainMenu('open');
     setTimeout(() => {
+        playSoundtrack();
         document.getElementById('loading').style.display = 'none';
-    }, 1000);
+    }, 2000);
 }; 
 
 function animateMainMenu(type) {
@@ -337,13 +537,39 @@ function animateMainMenu(type) {
 }
 
 function animateChessBoard(type) {
-    if (type === 'open') {
+    if (type === 'game') {
         document.getElementById('chessSocial').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
-        document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessStats').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    } else if (type === 'setup') {
+        document.getElementById('chessSetupHuman').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
     } else if (type === 'close') {
         document.getElementById('chessSocial').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessBoard').style.animation = "slidedown-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessStats').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
     }
+}
+
+function playSoundtrack() {
+    const songs = ['Ballada o Stańczyku', 'F-Cloud Song', 'Srochaj Anime Opening'];
+    let currentSongIndex = Math.floor(Math.random() * songs.length);
+    const audio = new Audio(`/static/soundtrack/${songs[currentSongIndex]}.mp3`);
+    audio.loop = false;
+    audio.play();
+    nowPlaying(songs[currentSongIndex]);
+
+    audio.addEventListener('ended', () => {
+        let newSongIndex;
+        do {
+            newSongIndex = Math.floor(Math.random() * songs.length);
+        } while (newSongIndex === currentSongIndex);
+        currentSongIndex = newSongIndex;
+        audio.src = `/static/soundtrack/${songs[currentSongIndex]}.mp3`;
+        audio.play();
+        nowPlaying(songs[currentSongIndex]);
+    });
+}
+
+function nowPlaying(name) {
+    createPopUp('info', '🎶Odtwarzanie', 'Teraz gra: ' + name + '<br>Utworzone przez: Patyna');
 }

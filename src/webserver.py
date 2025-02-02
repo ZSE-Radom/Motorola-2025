@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, session
 from modes import ClassicMode, BlitzMode, X960Mode
 from flask_cors import CORS
 import os
+from utils import get_events
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
@@ -15,10 +16,14 @@ available_modes = {
     '960': X960Mode
 }
 
-
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
+
+
+@app.route('/profile', methods=['GET'])
+def profile():
+    return jsonify({'name': 'Patyna', 'elo': 1200, 'wins': 0, 'losses': 0, 'draws': 0, 'pfp': '8715642fbbded8333534042f40a2a3e4.png'})
 
 
 @app.route('/listModes', methods=['GET'])
@@ -29,13 +34,15 @@ def list_modes():
 @app.route('/startOffline', methods=['POST'])
 def start_offline():
     try:
-        mode_name = request.json.get('mode')
+        mode_name = request.json.get('game_mode')
+        print(mode_name)
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
 
         mode_instance = available_modes[mode_name](None)
         session_id = session.get('session_id') or os.urandom(12).hex()
         session['session_id'] = session_id
+        mode_instance.session_id = session_id
 
         modes_store[session_id] = mode_instance
         mode_instance.web = True
@@ -201,6 +208,30 @@ def draw():
             'running': mode_instance.running,
             'winner': mode_instance.winner
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/events', methods=['GET'])
+def events():
+    try:
+        session_id = session.get('session_id')
+        if not session_id or session_id not in modes_store:
+            return jsonify({'error': 'Game session not found'}), 400
+
+        events = get_events(session_id)
+        return jsonify({'events': events})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/getBoardLook', methods=['GET'])
+def get_board_look():
+    try:
+        mode_name = request.args.get('mode')
+        if mode_name not in available_modes:
+            mode_name = 'classic'
+
+        mode_instance = available_modes[mode_name](None)
+        return jsonify({'board': mode_instance.board})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

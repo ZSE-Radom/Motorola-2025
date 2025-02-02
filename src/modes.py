@@ -3,6 +3,7 @@ import threading
 from tkinter import messagebox
 import random
 import os
+from utils import add_event
 
 class Mode:    
     def __init__(self, name, gui):
@@ -23,6 +24,7 @@ class Mode:
         self.game_mode = "" #classic and so
         self.first_player_name = os.getlogin()
         self.second_player_name = "Dupa"
+        self.session_id = ''
 
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
@@ -182,6 +184,7 @@ class Mode:
                     self.winner = winner
                     self.running = False
                     self.gui.root.quit()
+                    add_event(self.session_id, 'end')
             self.selected_piece = None
         else:
             if self.board[x][y] != " " and (
@@ -257,6 +260,7 @@ class Mode:
             if self.check_checkmate():
                 self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
                 messagebox.showinfo("Koniec gry!", f"Szach mat! {self.winner} wygrał!")
+                add_event(self.session_id, 'end')
                 self.running = False
 
             self.check_for_check()
@@ -279,12 +283,14 @@ class Mode:
 
     def resign(self):
         self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+        add_event(self.session_id, 'resign')
         self.running = False
 
 
     def draw(self):
         if self.game_type == "offline":
             self.winner = "Remis"
+            add_event(self.session_id, 'draw')
             self.running = False
         else:
             print('zaimplementuj remis') #TODO
@@ -298,6 +304,7 @@ class Mode:
                 if self.timer[self.current_turn] <= 0:
                     self.running = False
                     self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+                    add_event(self.session_id, 'time_over')
                     if not self.web:
                         messagebox.showinfo("Koniec czasu!", f"{self.winner} wygrał na czas!")
                         self.gui.root.quit()
