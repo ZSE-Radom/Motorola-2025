@@ -1,4 +1,2 @@
-# wbudowane w pythona
-tkinter
-threading
-random
+Flask==3.1.0
+Flask-Cors==5.0.0

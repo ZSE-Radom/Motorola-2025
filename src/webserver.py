@@ -23,7 +23,14 @@ def home():
 
 @app.route('/profile', methods=['GET'])
 def profile():
-    return jsonify({'name': 'Patyna', 'elo': 1200, 'wins': 0, 'losses': 0, 'draws': 0, 'pfp': '8715642fbbded8333534042f40a2a3e4.png'})
+    return jsonify({
+        'name': 'Patyna',
+        'elo': 1200,
+        'wins': 0,
+        'losses': 0,
+        'draws': 0,
+        'pfp': '8715642fbbded8333534042f40a2a3e4.png'
+    })
 
 
 @app.route('/listModes', methods=['GET'])
@@ -34,12 +41,15 @@ def list_modes():
 @app.route('/startOffline', methods=['POST'])
 def start_offline():
     try:
-        mode_name = request.json.get('game_mode')
-        print(mode_name)
+        data = request.json
+        mode_name = data.get('game_mode')
+        one_player = data.get('one_player', False)
+        human_color = data.get('human_color', "Biały")
+
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
 
-        mode_instance = available_modes[mode_name](None)
+        mode_instance = available_modes[mode_name](None, one_player=one_player, human_color=human_color)
         session_id = session.get('session_id') or os.urandom(12).hex()
         session['session_id'] = session_id
         mode_instance.session_id = session_id
@@ -211,6 +221,7 @@ def draw():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+
 @app.route('/events', methods=['GET'])
 def events():
     try:
@@ -223,6 +234,7 @@ def events():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+
 @app.route('/getBoardLook', methods=['GET'])
 def get_board_look():
     try:

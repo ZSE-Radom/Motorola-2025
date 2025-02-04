@@ -1,14 +1,15 @@
 import time
 import threading
-from tkinter import messagebox
 import random
 import os
 from utils import add_event
 
+from bot import ChessBot
+
+
 class Mode:    
-    def __init__(self, name, gui):
+    def __init__(self, name, gui, one_player=False, human_color="Biały"):
         self.name = name
-        self.gui = gui
         self.board = self.initialize_board()
         self.current_turn = "Biały"
         self.timer = {"Biały": 600, "Czarny": 600}
@@ -16,15 +17,22 @@ class Mode:
         self.running = True
         self.selected_piece = None
         self.valid_moves = []
-        self.start_timer()
         self.last_move = None
         self.web = False
         self.winner = None
-        self.game_type = "offline" #offline and so
-        self.game_mode = "" #classic and so
+        self.game_type = "offline"  # offline and so
+        self.game_mode = ""  # classic and so
         self.first_player_name = os.getlogin()
         self.second_player_name = "Dupa"
         self.session_id = ''
+
+        self.one_player = one_player
+        self.human_color = human_color
+        self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
+        if one_player:
+            self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
+
+        self.start_timer()
 
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
@@ -33,6 +41,9 @@ class Mode:
             return
 
         if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+            return
+        
+        if self.one_player and self.current_turn == self.bot_color:
             return
 
         directions = {
@@ -58,12 +69,12 @@ class Mode:
 
             if 0 <= x + forward < 8 and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + forward, y))
-                if not self.web:
+                if not self.web and buttons:
                     buttons[x + forward][y].config(bg="light blue")
 
-            if x == start_row and self.board[x + 2 * forward][y] == " " and self.board[x + forward][y] == " ":
+            if x == start_row and 0 <= x + 2 * forward < 8 and self.board[x + forward][y] == " " and self.board[x + 2 * forward][y] == " ":
                 self.valid_moves.append((x + 2 * forward, y))
-                if not self.web:
+                if not self.web and buttons:
                     buttons[x + 2 * forward][y].config(bg="light blue")
 
             for dx in [-1, 1]:
@@ -71,14 +82,14 @@ class Mode:
                     target = self.board[x + forward][y + dx]
                     if target != " " and target.islower() != piece.islower():
                         self.valid_moves.append((x + forward, y + dx))
-                        if not self.web:
+                        if not self.web and buttons:
                             buttons[x + forward][y + dx].config(bg="light blue")
 
             if self.last_move:
                 last_piece, (sx, sy), (ex, ey) = self.last_move
                 if last_piece.lower() == 'p' and abs(sx - ex) == 2 and sy == y and ex == x + forward:
                     self.valid_moves.append((x + forward, y + (1 if sy < y else -1)))
-                    if not self.web:
+                    if not self.web and buttons:
                         buttons[x + forward][y + (1 if sy < y else -1)].config(bg="light blue")
 
         elif piece.lower() in ['r', 'b', 'q']:
@@ -90,7 +101,7 @@ class Mode:
                     if self.board[nx][ny] != " " and self.board[nx][ny].islower() == piece.islower():
                         break
                     self.valid_moves.append((nx, ny))
-                    if not self.web:
+                    if not self.web and buttons:
                         buttons[nx][ny].config(bg="light blue")
 
                     if self.board[nx][ny] != " ":
@@ -104,7 +115,7 @@ class Mode:
                 nx, ny = x + direction[0], y + direction[1]
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    if not self.web:
+                    if not self.web and buttons:
                         buttons[nx][ny].config(bg="light blue")
 
         elif piece.lower() == 'k':
@@ -112,7 +123,7 @@ class Mode:
                 nx, ny = x + direction[0], y + direction[1]
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    if not self.web:
+                    if not self.web and buttons:
                         buttons[nx][ny].config(bg="light blue")
 
         self.check_for_check()
@@ -159,47 +170,16 @@ class Mode:
 
         
     def show_check_warning(self):
-        messagebox.showwarning("Szach", "Jesteś szachowany!")
-
-
-    def prompt_promotion(self):
-        promotion = messagebox.askquestion("Promocja piona", "Wypromować na królową?")
-        if promotion == 'yes':
-            return 'Q' if self.current_turn == 'Biały' else 'q'
-        else:
-            return 'R' if self.current_turn == 'Biały' else 'r'
-
-
-    def on_click(self, x, y, buttons):
-        if self.selected_piece:
-            self.reset_highlights(buttons)
-            start = self.selected_piece
-            end = (x, y)
-            if self.is_valid_move(start, end):
-                self.move_piece(start, end)
-                self.gui.update_board()
-                winner = self.check_winner()
-                if winner:
-                    messagebox.showinfo("Koniec gry!", winner)
-                    self.winner = winner
-                    self.running = False
-                    self.gui.root.quit()
-                    add_event(self.session_id, 'end')
-            self.selected_piece = None
-        else:
-            if self.board[x][y] != " " and (
-                (self.current_turn == "Biały" and self.board[x][y].isupper()) or
-                (self.current_turn == "Czarny" and self.board[x][y].islower())
-            ):
-                self.selected_piece = (x, y)
-                self.highlight_moves(x, y, buttons)
-
+        print('Szach!')
+        add_event(self.session_id, 'check')
+        # TODO
 
     def prompt_promotion(self):
-        promotion_options = ['Q', 'R', 'B', 'N']
-        selected = messagebox.askquestion("Promocja piona", "Wybierz figurę: Q, R, B, N")
-        return (selected if selected in promotion_options else 'Q') if self.current_turn == 'Biały' else selected.lower()
-
+        add_event(self.session_id, 'promotion')
+        print('promocja szacha')
+        return "Q"
+        # TODO
+        
 
     def reset_highlights(self, buttons):
         for i in range(8):
@@ -242,12 +222,12 @@ class Mode:
         return True
     
 
-    def move_piece(self, start, end):
+    def move_piece(self, start, end, bypass_validity=False):
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
 
-        if self.is_valid_move(start, end):
+        if bypass_validity or self.is_valid_move(start, end):
             self.board[ex][ey] = piece
             self.board[sx][sy] = " "
             self.last_move = (piece, start, end)
@@ -259,13 +239,16 @@ class Mode:
 
             if self.check_checkmate():
                 self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
-                messagebox.showinfo("Koniec gry!", f"Szach mat! {self.winner} wygrał!")
                 add_event(self.session_id, 'end')
                 self.running = False
 
             self.check_for_check()
 
             self.check_winner()
+
+            if self.one_player and self.current_turn == self.bot_color and self.running:
+                    add_event(self.session_id, 'bot_move_begin')
+                    threading.Thread(target=self.perform_bot_move, daemon=True).start()
 
 
     def check_winner(self):
@@ -295,7 +278,7 @@ class Mode:
             add_event(self.session_id, 'draw')
             self.running = False
         else:
-            print('zaimplementuj remis') #TODO
+            print('zaimplementuj remis')  # TODO
 
 
     def start_timer(self):
@@ -307,18 +290,40 @@ class Mode:
                     self.running = False
                     self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
                     add_event(self.session_id, 'time_over')
-                    if not self.web:
-                        messagebox.showinfo("Koniec czasu!", f"{self.winner} wygrał na czas!")
-                        self.gui.root.quit()
-                    return
                 
         threading.Thread(target=timer_thread, daemon=True).start()
 
+    def print_board(self, board):
+        for row in board:
+            print(" ".join(row))
+        print()
+
+
+    def perform_bot_move(self):
+        bot_move = self.bot.get_move(self.board, self.current_turn)
+        if bot_move is None:
+            self.resign()
+            return
+
+        self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)        
+        add_event(self.session_id, 'bot_move_finish')
+        print("Board after bot move:")
+        self.print_board(self.board)
+
+        winner = self.check_winner()
+        if winner:
+            self.winner = winner
+            self.running = False
+            add_event(self.session_id, 'end')
+        else:
+            if self.one_player and self.current_turn == self.bot_color and self.running:
+                print('probuje ruszyc bota')
+                threading.Thread(target=self.perform_bot_move, daemon=True).start()
 
 
 class ClassicMode(Mode):
-    def __init__(self, gui):
-        super().__init__("Classic", gui)
+    def __init__(self, gui, one_player=False, human_color="Biały"):
+        super().__init__("Classic", gui, one_player, human_color)
         self.game_mode = "Klasyczny"
 
     def initialize_board(self):
@@ -335,8 +340,8 @@ class ClassicMode(Mode):
 
 
 class BlitzMode(Mode):
-    def __init__(self, gui):
-        super().__init__("Blitz", gui)
+    def __init__(self, gui, one_player=False, human_color="Biały"):
+        super().__init__("Blitz", gui, one_player, human_color)
         self.timer = {"Biały": 60, "Czarny": 60}
         self.game_mode = "Blitz"
 
@@ -352,12 +357,12 @@ class BlitzMode(Mode):
             ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ]
     
+
 class X960Mode(Mode):
-    def __init__(self, gui):
-        super().__init__("960", gui)
+    def __init__(self, gui, one_player=False, human_color="Biały"):
+        super().__init__("960", gui, one_player, human_color)
         self.game_mode = "Fischer Losowy"
 
-    #fischer random chess - randomized positions
     def initialize_board(self):
         figures = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
         board = [[" "] * 8 for _ in range(8)]
