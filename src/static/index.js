@@ -18,11 +18,11 @@ function fetchProfile() {
             document.getElementById('profileRank').innerHTML = "RANK  " + data.elo;
             document.getElementById('profilePfpSrc').src = '/static/profiles/' + data.pfp;
         }
-    }); 
+    });
 }
 
 function gameStart(type) {
-    /** 
+    /**
     if (type === 'Offline') {
         fetch('/listModes', {
             method: 'GET',
@@ -108,24 +108,24 @@ function renderSetup(game_type) {
                 const slider = toggle.querySelector(".slider");
                 const labelsContainer = toggle.querySelector(".labels");
                 setupOptions['game_type'] = 'offline';
-                
+
                 toggle.style.setProperty("--options", options.length);
 
                 labelsContainer.innerHTML = '';
-                
+
                 options.forEach((option, index) => {
                     const label = document.createElement("span");
                     label.textContent = option;
                     label.dataset.index = index;
                     labelsContainer.appendChild(label);
                 });
-                
+
                 let currentIndex = 0;
                 function updateSlider() {
                     slider.style.left = `${(100 / options.length) * currentIndex}%`;
                     slider.style.background = colors[currentIndex];
                 }
-                
+
                 toggle.addEventListener("click", () => {
                     currentIndex = (currentIndex + 1) % options.length;
                     updateSlider();
@@ -164,7 +164,7 @@ function renderSetup(game_type) {
                         }
                     }
                 });
-                
+
                 updateSlider();
                 setTimeout(() => {
                     document.getElementById('mainmenu').style.display = 'none';
@@ -246,7 +246,7 @@ function renderSetup(game_type) {
             }
         });
     }
-    
+
 }
 
 function renderChessBoard(boardData, time) {
@@ -457,7 +457,7 @@ function draw() {
 
 function closeModes() {
     document.getElementById('modeList').style.display = 'none';
-    const collection = document.getElementsByClassName("active"); 
+    const collection = document.getElementsByClassName("active");
     for (const c of collection) {
         c.classList.remove('active');
     }
@@ -558,7 +558,7 @@ window.onload = function(){
         playSoundtrack();
         document.getElementById('loading').style.display = 'none';
     }, 2000);
-}; 
+};
 
 function animateMainMenu(type) {
     if (type === 'open') {
@@ -624,4 +624,14 @@ document.addEventListener('click', (e) => {
     setTimeout(() => {
         currentlyPlaying = false;
     }, 100);
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    window.websocket = new WebSocket('ws://localhost:8001');
+    window.websocket.addEventListener('open', () => {
+        websocket.send(JSON.stringify({ type: 'init'}))
+    });
+    window.websocket.addEventListener('message', (message) => {
+        console.log(message);
+    });
 });
