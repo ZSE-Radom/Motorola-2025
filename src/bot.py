@@ -1,4 +1,3 @@
-
 import copy
 import math
 import random
@@ -8,8 +7,8 @@ PIECE_VALUES = {
     'n': 3, 'N': 3,
     'b': 3, 'B': 3,
     'r': 5, 'R': 5,
-    'q': 9, 'Q': 9,
-    'k': 1000, 'K': 1000
+    'q': 10, 'Q': 10,
+    'k': 15, 'K': 15
 }
 
 KNIGHT_MOVES = [(2, 1), (2, -1), (-2, 1), (-2, -1),
@@ -20,6 +19,28 @@ DIAGONAL_DIRS = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 STRAIGHT_DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 CENTER_SQUARES = {(3, 3), (3, 4), (4, 3), (4, 4)}
+
+PAWN_TABLE = [
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    [0.1, 0.1, 0.2, 0.3, 0.3, 0.2, 0.1, 0.1],
+    [0.05, 0.05, 0.1, 0.25, 0.25, 0.1, 0.05, 0.05],
+    [0.0, 0.0, 0.0, 0.2, 0.2, 0.0, 0.0, 0.0],
+    [0.05, -0.05, -0.1, 0.0, 0.0, -0.1, -0.05, 0.05],
+    [0.05, 0.1, 0.1, -0.2, -0.2, 0.1, 0.1, 0.05],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+]
+
+KNIGHT_TABLE = [
+    [-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5],
+    [-0.4, -0.2,  0.0,  0.0,  0.0,  0.0, -0.2, -0.4],
+    [-0.3,  0.0, 0.1, 0.15, 0.15, 0.1,  0.0, -0.3],
+    [-0.3, 0.05, 0.15, 0.2, 0.2, 0.15, 0.05, -0.3],
+    [-0.3,  0.0, 0.15, 0.2, 0.2, 0.15,  0.0, -0.3],
+    [-0.3, 0.05, 0.1, 0.15, 0.15, 0.1, 0.05, -0.3],
+    [-0.4, -0.2,  0.0, 0.05, 0.05,  0.0, -0.2, -0.4],
+    [-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5],
+]
 
 def is_inside(x, y):
     return 0 <= x < 8 and 0 <= y < 8
@@ -39,11 +60,9 @@ def generate_piece_moves(board, x, y):
         if piece.isupper():
             forward = -1
             start_row = 6
-            enemy_color = str.islower
         else:
             forward = 1
             start_row = 1
-            enemy_color = str.isupper
 
         nx, ny = x + forward, y
         if is_inside(nx, ny) and board[nx][ny] == " ":
@@ -53,7 +72,7 @@ def generate_piece_moves(board, x, y):
                 moves.append(((x, y), (nx2, ny)))
         for dy in [-1, 1]:
             nx, ny = x + forward, y + dy
-            if is_inside(nx, ny) and board[nx][ny] != " " and enemy_color(board[nx][ny]):
+            if is_inside(nx, ny) and board[nx][ny] != " " and is_enemy(piece, board[nx][ny]):
                 moves.append(((x, y), (nx, ny)))
     
     elif piece.lower() == 'n':
@@ -108,7 +127,6 @@ def generate_piece_moves(board, x, y):
             if is_inside(nx, ny):
                 if board[nx][ny] == " " or is_enemy(piece, board[nx][ny]):
                     moves.append(((x, y), (nx, ny)))
-        # TODO: Castling
     
     return moves
 
@@ -153,11 +171,18 @@ def generate_all_legal_moves(board, turn):
     return legal_moves
 
 def make_move(board, move):
-    new_board = copy.deepcopy(board)
+    new_board = [row.copy() for row in board]
     (sx, sy), (ex, ey) = move
     piece = new_board[sx][sy]
     new_board[sx][sy] = " "
-    new_board[ex][ey] = piece
+    if piece.lower() == 'p':
+        if (piece.isupper() and ex == 0) or (piece.islower() and ex == 7):
+            new_piece = 'Q' if piece.isupper() else 'q'
+            new_board[ex][ey] = new_piece
+        else:
+            new_board[ex][ey] = piece
+    else:
+        new_board[ex][ey] = piece
     return new_board
 
 def evaluate_board(board):
@@ -165,23 +190,42 @@ def evaluate_board(board):
     for x in range(8):
         for y in range(8):
             piece = board[x][y]
-            if piece != " ":
-                value = PIECE_VALUES.get(piece, 0)
-                if (x, y) in CENTER_SQUARES:
-                    value += 0.2
-                if piece.isupper():
-                    score += value
-                else:
-                    score -= value
-
-    white_moves = len(generate_all_legal_moves(board, "Biały"))
-    black_moves = len(generate_all_legal_moves(board, "Czarny"))
-    score += 0.1 * (white_moves - black_moves)
-    
+            if piece == " ":
+                continue
+            value = PIECE_VALUES.get(piece, 0)
+            if piece == 'P':
+                value += PAWN_TABLE[x][y]
+            elif piece == 'p':
+                value += PAWN_TABLE[7 - x][y]
+            elif piece == 'N':
+                value += KNIGHT_TABLE[x][y]
+            elif piece == 'n':
+                value += KNIGHT_TABLE[7 - x][y]
+            if (x, y) in CENTER_SQUARES:
+                value += 0.2
+            if piece.isupper():
+                score += value
+            else:
+                score -= value
     return score
 
+def order_moves(board, moves, current_turn, maximizing):
+    def move_score(move):
+        (sx, sy), (ex, ey) = move
+        score = 0
+        captured = board[ex][ey]
+        attacker = board[sx][sy]
+        if captured != " ":
+            victim_val = PIECE_VALUES.get(captured, 0)
+            attacker_val = PIECE_VALUES.get(attacker, 0)
+            score += (victim_val - attacker_val) * 10
+        if (ex, ey) in CENTER_SQUARES:
+            score += 0.2
+        return score
+    return sorted(moves, key=move_score, reverse=maximizing)
+
 class ChessBot:
-    def __init__(self, bot_color="Czarny", search_depth=3):
+    def __init__(self, bot_color="Czarny", search_depth=4):
         self.bot_color = bot_color
         self.search_depth = search_depth
 
@@ -190,21 +234,17 @@ class ChessBot:
             print("It's not my turn!")
             return None
         
+        maximizing = (self.bot_color == "Biały")
         legal_moves = generate_all_legal_moves(board, current_turn)
-        print(f"Bot ({current_turn}) has {len(legal_moves)} legal moves available.")
         if not legal_moves:
-            print("No legal moves available. This is checkmate or stalemate.")
             return None
         
-        _, best_move = self.minimax(board, self.search_depth, -math.inf, math.inf, True, current_turn)
-        if best_move is None:
-            print("Minimax did not select a move. Possibly at a terminal position.")
-        else:
-            print(f"Bot selected move: {best_move}")
+        _, best_move = self.minimax(board, self.search_depth, -math.inf, math.inf, maximizing, current_turn)
         return best_move
 
     def minimax(self, board, depth, alpha, beta, maximizing, current_turn):
         moves = generate_all_legal_moves(board, current_turn)
+        moves = order_moves(board, moves, current_turn, maximizing)
         
         if depth == 0 or not moves:
             return evaluate_board(board), None
@@ -215,7 +255,7 @@ class ChessBot:
             for move in moves:
                 new_board = make_move(board, move)
                 next_turn = "Czarny" if current_turn == "Biały" else "Biały"
-                eval_score, _ = self.minimax(new_board, depth - 1, alpha, beta, False, next_turn)
+                eval_score, _ = self.minimax(new_board, depth-1, alpha, beta, False, next_turn)
                 if eval_score > max_eval:
                     max_eval = eval_score
                     best_move = move
@@ -228,7 +268,7 @@ class ChessBot:
             for move in moves:
                 new_board = make_move(board, move)
                 next_turn = "Czarny" if current_turn == "Biały" else "Biały"
-                eval_score, _ = self.minimax(new_board, depth - 1, alpha, beta, True, next_turn)
+                eval_score, _ = self.minimax(new_board, depth-1, alpha, beta, True, next_turn)
                 if eval_score < min_eval:
                     min_eval = eval_score
                     best_move = move
@@ -249,19 +289,15 @@ if __name__ == "__main__":
         ["R", "N", "B", "Q", "K", "B", "N", "R"]
     ]
     
-    bot = ChessBot(bot_color="Czarny", search_depth=3)
+    bot = ChessBot(bot_color="Czarny", search_depth=4)
     current_turn = "Biały"
     
     white_moves = generate_all_legal_moves(board, current_turn)
     if white_moves:
         move = random.choice(white_moves)
         board = make_move(board, move)
-        print(f"White moved from {move[0]} to {move[1]}")
         current_turn = "Czarny"
     
     bot_move = bot.get_move(board, current_turn)
     if bot_move:
         board = make_move(board, bot_move)
-        print(f"Bot moved from {bot_move[0]} to {bot_move[1]}")
-    else:
-        print("Bot could not find a move.")

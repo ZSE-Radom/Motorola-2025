@@ -2,6 +2,7 @@ let popUpCount = 0;
 let username = '';
 let setupOptions = {};
 let currentlyPlaying = false;
+let boardInitialized = false;
 
 function fetchProfile() {
     fetch('/profile', {
@@ -70,7 +71,7 @@ function startGame(type, mode) {
                     document.getElementById('modeList').style.display = 'none';
                     document.getElementById('chessGame').style.display = 'flex';
                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-                    renderChessBoard(data.board, data.timer);
+                    initChessBoard(data.board, data.timer);
                     setInterval(refreshTimer, 500);
                     setInterval(checkForEvents, 500);
                 }
@@ -101,7 +102,7 @@ function renderSetup(game_type) {
                 createPopUp('error', 'Błąd z połączeniem', data.error);
             } else {
                 boardData = data.board;
-                renderChessBoard(boardData, 0);
+                initChessBoard(boardData, 0);
                 const options = ["Na tym komputerze (gra offline)", "Na innym komputerze (gra online)"];
                 const colors = ["#FC6471", "#7D5BA6"];
                 const toggle = document.getElementById("toggle");
@@ -208,7 +209,7 @@ function renderSetup(game_type) {
                                     document.getElementById('chessSocial').style.display = 'block';
                                     document.getElementById('chessStats').style.display = 'block';
                                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-                                    renderChessBoard(data.board, data.timer);
+                                    initChessBoard(data.board, data.timer);
                                     setInterval(refreshTimer, 500);
                                     setInterval(checkForEvents, 500);
                                 }, 1000);
@@ -240,7 +241,7 @@ function renderSetup(game_type) {
                 initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                 animateChessBoard('setup');
                 animateChessBoard('game');
-                renderChessBoard(data.board, data.timer);
+                initChessBoard(data.board, data.timer);
                 setInterval(refreshTimer, 500);
                 setInterval(checkForEvents, 500);
             }
@@ -249,29 +250,102 @@ function renderSetup(game_type) {
     
 }
 
-function renderChessBoard(boardData, time) {
+function updateChessBoard(boardData) {
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const squareId = i * 8 + j;
+        const square = document.getElementById(squareId);
+        const newPiece = boardData[i][j] ? boardData[i][j].trim() : '';
+        const currentPiece = square.dataset.piece || '';
+  
+        if (currentPiece !== newPiece) {
+          square.dataset.piece = newPiece;
+  
+          const pieceImg = square.querySelector('img.piece');
+  
+          if (newPiece === '') {
+            if (pieceImg) {
+              pieceImg.remove();
+            }
+          } else {
+            let src;
+            if (newPiece === newPiece.toUpperCase()) {
+              src = `/static/figures/${newPiece}x.svg`;
+            } else {
+              src = `/static/figures/${newPiece}.svg`;
+            }
+  
+            if (pieceImg) {
+              pieceImg.src = src;
+            } else {
+              const newImg = document.createElement('img');
+              newImg.className = 'piece';
+              newImg.src = src;
+              square.insertBefore(newImg, square.firstChild);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function initChessBoard(boardData) {
     document.getElementById('chessGame').style.display = 'flex';
     const chessBoard = document.getElementById('chessBoard');
     const letters = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
-
+  
     chessBoard.innerHTML = '';
-
+  
     for (let i = 0; i < 8; i++) {
-        const row = document.createElement('div');
-        row.className = 'row';
-
-        for (let j = 0; j < 8; j++) {
-            const square = createSquare(i, j, boardData[i][j], letters);
-            row.appendChild(square);
+      const row = document.createElement('div');
+      row.className = 'row';
+  
+      for (let j = 0; j < 8; j++) {
+        const square = document.createElement('div');
+        square.className = 'square';
+        square.id = i * 8 + j;
+        square.dataset.piece = boardData[i][j] ? boardData[i][j].trim() : '';
+  
+        const isLightSquare = (i + j) % 2 === 0;
+        square.style.backgroundColor = isLightSquare ? '#FCF7FF' : '#56876D';
+  
+        if (square.dataset.piece !== '') {
+          const pieceImage = document.createElement('img');
+          pieceImage.className = 'piece';
+          const piece = square.dataset.piece;
+          if (piece === piece.toUpperCase()) {
+            pieceImage.src = `/static/figures/${piece}x.svg`;
+          } else {
+            pieceImage.src = `/static/figures/${piece}.svg`;
+          }
+          square.appendChild(pieceImage);
         }
-
-        chessBoard.appendChild(row);
+  
+        if (j === 0) {
+          const boardNumber = document.createElement('div');
+          boardNumber.className = 'boardNumbers';
+          boardNumber.style.color = isLightSquare ? '#56876D' : '#FCF7FF';
+          boardNumber.textContent = i + 1;
+          square.appendChild(boardNumber);
+        }
+  
+        if (i === 7) {
+          const boardLetter = document.createElement('div');
+          boardLetter.className = 'boardLetters';
+          boardLetter.style.color = isLightSquare ? '#56876D' : '#FCF7FF';
+          boardLetter.textContent = letters[j];
+          square.appendChild(boardLetter);
+        }
+  
+        square.addEventListener('click', () => handleSquareClick(i, j));
+        row.appendChild(square);
+      }
+  
+      chessBoard.appendChild(row);
     }
-
-    updateTimers(time);
-    animateChessBoard('game');
-}
-
+  
+    boardInitialized = true;
+  }
 
 function createSquare(row, col, piece, letters) {
     const square = document.createElement('div');
@@ -354,28 +428,33 @@ function executeMove(posx, posy, newPosx, newPosy) {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
-            renderChessBoard(data.board, data.timer);
+            //initChessBoard(data.board, data.timer);
         }
     });
 }
 
 function refreshTimer() {
     fetch('/stats')
-    .then(res => res.json())
-    .then(data => {
+      .then(res => res.json())
+      .then(data => {
         if (data.error) {
-            displayErrorPopUp('Błąd z połączeniem', data.error);
+          displayErrorPopUp('Błąd z połączeniem', data.error);
         } else {
-            if (data.running === true) {
-                renderChessBoard(data.board, data.timer);
+          if (data.running === true) {
+            if (!boardInitialized) {
+              initChessBoard(data.board);
             } else {
-                return 'OK';
+              updateChessBoard(data.board);
             }
-            document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
+            updateTimers(data.timer);
+            animateChessBoard('game');
+          } else {
+            return 'OK';
+          }
+          document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
         }
-    });
-}
-
+      });
+  }
 function createPopUp(type, title, content) {
     document.getElementById('notifySound').play();
     popUpCount++;
@@ -431,6 +510,7 @@ function resign() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
+            boardInitialized = false;
             return 'OK';
         }
     });
@@ -450,6 +530,7 @@ function draw() {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
         } else {
+            boardInitialized = false;
             return 'OK';
         }
     });
