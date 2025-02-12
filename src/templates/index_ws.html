@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorola srotorola</title>
+    <link rel="stylesheet" href="static/index.css">
+</head>
+<!--<body oncontextmenu="return false"> TODO: dodać to przed oddaniem projektu -->
+<body>
+    <div id="mainmenu">
+        <div id="header">
+            <h1 id="title">Srotorola szachy</h1>
+            <div id="profile">
+                <div id="profilePfp"><img id="profilePfpSrc" src=""></div>
+                <div>
+                    <div id="profileName"></div>
+                    <div id="profileRank"></div>
+                </div>
+            </div>
+        </div>
+        <div id="gameModes">
+            <h2>Z kim zagrasz dziś?</h2>
+            <div>
+            <button id="startHuman" onclick="renderSetup('human')">Ze znajomym</button>
+            <button id="startBot" onclick="renderSetup('bot')">Z botem</button>
+        </div>
+        </div>
+        <div id="modeList"><div style="display: flex;"><h1>Wybierz tryb gry</h1><h1 id="close" onclick="closeModes();">X</h1></div><div id="modeBtns"></div></div>
+        <div id="feed">
+            <h2 id="feedTitle">Aktualności</h2>
+            <div id="feedContent">
+                <div class="feedItem" id="feedItem1">
+                    <div class="feedItemTitle">Zagraj z SochAI</div>
+                    <div class="feedItemContent">Nasza najnowsza Sztuczna Głupota</div>
+                </div>
+                <div class="feedItem" id="feedItem2">
+                    <div class="feedItemTitle">Sponsor główny</div>
+                    <div class="feedItemContent">Szymon Srochaj i jego firma</div>
+                </div>
+                <div class="feedItem" id="feedItem3">
+                    <div class="feedItemTitle">Zgadnij liczbę</div>
+                    <div class="feedItemContent">Nasza rewolucyjna gra</div>
+                </div>
+                <div class="feedItem" id="feedItem4">
+                    <div class="feedItemTitle">Zagraj z MatiuuAI</div>
+                    <div class="feedItemContent">Mądrzejszy model szachowy</div>
+                </div>
+                <div class="feedItem" id="feedItem5">
+                    <div class="feedItemTitle">Odkryj nasze inne gry</div>
+                    <div class="feedItemContent">Tworzymy ich wiele...</div>
+                </div>
+            </div>        
+        </div>
+        <div id="bottomButtons">
+            <button id="settings">USTAWIENIA</button>
+            <button id="exit">WYJŚCIE</button>
+        </div>
+    </div>
+    <div id="chessGame">
+        <div id="chessSocial">
+            <div id="chessPfp2"><img src="/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png"></div>
+            <div class="chessName" id="chessName2">MinerPL</div>
+            <div id="chessTimer2"></div>
+            <div id="chessButtons">
+                <button id="chessResign" onclick="resign();">REZYGNACJA</button>
+                <button id="chessDraw" onclick="draw();">REMIS</button>
+                <button id="chessExit" onclick="exit();">WYJŚCIE</button>
+            </div>
+            <div id="chessTimer1"></div>
+            <div class="chessName" id="chessName1">Patyna</div>
+            <div id="chessPfp1"><img src="/static/profiles/8715642fbbded8333534042f40a2a3e4.png"></div>
+        </div>
+        <div class="chessSetup" id="chessSetupBot"></div>
+        <div class="chessSetup" id="chessSetupHuman">
+            <div id="chessSetupContainer">
+                <div id="chessSetupFields">
+                    <h2>Mój znajomy znajduje się...</h2>
+                    <div id="chessSetupField1">
+                        <div id="chessSetupField1Content">
+                            <div class="toggle-container">
+                                <div class="toggle" id="toggle">
+                                    <div class="slider"></div>
+                                    <div class="labels"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h2>Wybierz tryb gry w jaki zagracie</h2>
+                    <div id="chessSetupField2">
+                        <div id="chessSetupField2Content">
+                        </div>
+                    </div>
+                    <h2>Wybierz dodatkowe opcje</h2>
+                    <div class="option-list">
+                        <div class="option">
+                            <span>Option 1</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="option">
+                            <span>Option 2</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="option">
+                            <span>Option 3</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="chessGameStart">
+                    <button id="chessGameStartButton" class="modeBtn" onclick="startGame('human')">ZACZNIJ GRĘ!!!</button>
+                </div>
+            </div>
+        </div>
+        <div id="chessBoard">
+            <div id="chessBoardContainer">
+                <div id="chessBoardFields"></div>
+            </div>
+        </div>
+        <div id="chessStats">
+            <div id="chessGameTypeStat">
+                <h3>Typ gry</h3>
+                <div id="chessGameType"></div>
+            </div>
+            <div id="chessTurnStat">
+                <h3>Obecnie gra</h3>
+                <div id="chessTurn"></div>
+            </div>
+            <div id="chessMistakesStat">
+                <h3>Błędy</h3>
+                <div id="chessMistakes"></div>
+            </div>
+            <div id="chessPrecipitatesStat">
+                <h3>Strącenia</h3>
+                <div id="chessPrecipitates"></div>
+            </div>
+            <div id="chessLogStat">
+                <h3>Log</h3>
+                <div id="chessLog"></div>
+            </div>
+            <div id="chessButtonsStat">
+                <button id="chessDownloadHistory"></button>
+                <button id="chessDownloadLog"></button>
+                <button id="chessNerdView"></button>
+            </div>
+        </div>
+    </div>
+    <div id="errorPopUp">
+        <div id="errorPopUpContent">
+            <div id="errorPopUpText">Błąd połączenia</div>
+            <button id="errorPopUpButton" onclick="closeErrorPopUp()">OK</button>
+        </div>
+    </div>
+    <div id="infoPopUp">
+        <div id="infoPopUpContent">
+            <div id="infoPopUpText">Informacja</div>
+            <button id="infoPopUpButton" onclick="closeInfoPopUp()">OK</button>
+        </div>
+    </div>
+    <div id="loading">
+        <div id="lobar">
+            <img src="/static/loading.gif">
+        </div>
+        <div id="loinfo">Wczytuję...</div>
+    </div>
+    <script>
+        let chessSocket;
+    </script>
+    <script src="static/scripts/index_ws.js"></script>
+    <script src="static/scripts/animations.js"></script>
+    <script src="static/scripts/audio.js"></script>
+    <script src="static/scripts/popup.js"></script>
+    <script src="static/scripts/chess.js"></script>
+    <audio id="loadingSound" src="/static/sounds/loading.ogg" autoplay></audio>
+    <audio id="clickSound" src="/static/sounds/click.ogg"></audio>
+    <audio id="btnClickSound" src="/static/sounds/btn.ogg"></audio>
+    <audio id="notifySound" src="/static/sounds/notify.ogg"></audio>
+</body>
+</html>

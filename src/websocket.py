@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import json
 import os
-import src.modes2 as modes
+import modes2 as modes
 from typing import Dict, List, Type
 from dataclasses import dataclass
 
@@ -45,7 +45,7 @@ async def create_game(websocket, data):
         await error(websocket, "Invalid mode")
         return
 
-    gamemode = available_modes[data['gamemode']](None, one_player=False, human_color="Biały")
+    gamemode = available_modes[data['gamemode']](one_player=False, human_color="Biały")
 
     gamemode.players["white"] = data["session_id"]
 
@@ -81,7 +81,7 @@ async def create_game(websocket, data):
     print(f"Game created with ID {game_id}")
 
     if data['party_type'] == "offline":
-        gamemode.players.black = data["session_id"]
+        gamemode.players["black"] = data["session_id"] 
         await start_game(game_id)
 
 async def start_game(game_id):
@@ -94,14 +94,14 @@ async def start_game(game_id):
         await play(socket, game_id)
 
 async def move(websocket, gamemode, event):
-    event["old_pos"] = event["old_pos"].split(",")
-    event["new_pos"] = event["new_pos"].split(",")
+    event["old_pos"] = list(map(int, event["old_pos"].split(",")))
+    event["new_pos"] = list(map(int, event["new_pos"].split(",")))
 
     if not gamemode.is_valid_move(event["old_pos"], event["new_pos"]):
         await error(websocket, "Invalid move")
         return
 
-    await gamemode.make_move(event["old_pos"], event["new_pos"])
+    gamemode.make_move(event["old_pos"], event["new_pos"])
     broadcast(PARTIES[event["game_id"]].websockets, json.dumps({
         "type": "move",
         "old_pos": event["old_pos"],
@@ -115,8 +115,8 @@ async def play(websocket, game_id):
         "type": "play",
         "board": gamemode.board,
         "current_turn": gamemode.current_turn,
-        "time_player_1": gamemode.timer["Biały"],
-        "time_player_2": gamemode.timer["Czarny"],
+        "time_player_1": gamemode.timer["white"],
+        "time_player_2": gamemode.timer["black"],
     }))
 
     async for message in websocket:
@@ -126,11 +126,11 @@ async def play(websocket, game_id):
                 await error(websocket, "Unauthorized")
                 continue
 
-            if game.gamemode.current_turn != "Biały" and event["session_id"] != game.players[0]:
+            if game.gamemode.current_turn != "white" and event["session_id"] != game.players[0]:
                 await error(websocket, "Not your turn")
                 continue
 
-            if game.gamemode.current_turn != "Czarny" and event["session_id"] != game.players[1]:
+            if game.gamemode.current_turn != "black" and event["session_id"] != game.players[1]:
                 await error(websocket, "Not your turn")
                 continue
 
@@ -145,9 +145,9 @@ async def play(websocket, game_id):
         elif event["type"] == "promote":
             # TODO
             pass
-
-
-
+        else:
+            await error(websocket, "Invalid event type")
+        
 
 async def list_parties(websocket):
     parties = {}

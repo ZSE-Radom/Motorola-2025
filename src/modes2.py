@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 
 from bot import ChessBot
 
+
 class Mode:
     name: str
     board: List[List[str]]
@@ -12,14 +13,14 @@ class Mode:
     timer: Dict[str, int]
     running: bool
     move_history: List[str]
-    last_move: List[str] or None
+    last_move: List[str]
     game_type: str
     players: Dict[str, str or None]
     party_id: str
     moves: Dict[str, List[Tuple[int, int]]]
     one_player: bool
     bot: ChessBot
-    def __init__(self, name, one_player=False, game_type="offline", party_id = None):
+    def __init__(self, name, **kwargs):
         self.name = name
         self.board = self.initialize_board()
         self.current_turn = "white"
@@ -29,13 +30,13 @@ class Mode:
         }
         self.running = False
         self.move_history = []
-        self.last_move = None
-        self.game_type = game_type
+        self.last_move = []
+        self.game_type = kwargs.get("game_type", "offline")
         self.players = {
             "white": None,
             "black": None
         }
-        self.party_id = party_id
+        self.party_id = kwargs.get("party_id", None)
         self.moves = {
             'p': [(1, 0)],
             'r': [(1, 0), (-1, 0), (0, 1), (0, -1)],
@@ -45,8 +46,11 @@ class Mode:
             'k': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
         }
 
-        self.one_player = one_player
-        if one_player:
+        self.one_player = kwargs.get("one_player", False)
+
+        vars(self).update(kwargs)
+
+        if getattr(self, "one_player", False):
             self.bot = ChessBot(bot_color="black")
 
     def start_game(self):
@@ -130,6 +134,7 @@ class Mode:
 
     def is_valid_move(self, start: Tuple[int, int], end: Tuple[int, int]) -> bool:
         current_piece = self.board[start[0]][start[1]]
+        print(current_piece)
         if current_piece == " ":
             return False
 
@@ -156,10 +161,9 @@ class Mode:
         return True
 
 
-
-def ClassicMode(Mode):
-    def __init__(self, one_player=False):
-        super().__init__("Classic", one_player)
+class ClassicMode(Mode):
+    def __init__(self, **kwargs):
+        super().__init__("Classic", **kwargs)
 
     def initialize_board(self):
         return [
@@ -175,9 +179,9 @@ def ClassicMode(Mode):
 
 
 class BlitzMode(Mode):
-    def __init__(self, one_player=False):
-        super().__init__("Blitz", one_player)
-        self.timer = {"Biały": 60, "Czarny": 60}
+    def __init__(self, **kwargs):
+        super().__init__("Blitz", **kwargs)
+        self.timer = {"white": 60, "black": 60}
         self.game_mode = "Blitz"
 
     def initialize_board(self):
@@ -194,8 +198,8 @@ class BlitzMode(Mode):
 
 
 class X960Mode(Mode):
-    def __init__(self, one_player=False):
-        super().__init__("960", one_player)
+    def __init__(self, **kwargs):
+        super().__init__("960", **kwargs)
         self.game_mode = "Fischer Losowy"
 
     def initialize_board(self):

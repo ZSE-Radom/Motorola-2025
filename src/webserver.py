@@ -246,6 +246,11 @@ def get_board_look():
         return jsonify({'board': mode_instance.board})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/ws', methods=['GET'])
+def ws():
+    return render_template('index_ws.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
