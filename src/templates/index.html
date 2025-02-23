@@ -53,7 +53,7 @@
             </div>        
         </div>
         <div id="bottomButtons">
-            <button id="settings">USTAWIENIA</button>
+            <button id="settings_entry" onclick="document.getElementById('settings').style.display = 'block'">USTAWIENIA</button>
             <button id="exit">WYJŚCIE</button>
         </div>
     </div>
@@ -170,6 +170,20 @@
             <img src="/static/loading.gif">
         </div>
         <div id="loinfo">Wczytuję...</div>
+    </div>
+    <div id="settings">
+        <div style="display: flex; font-size: 2rem; font-weight: 800;">
+            <div id="title_settings">DUPA</div>
+            <div id="close_settings" onclick="document.getElementById('settings').style.display = 'none'">X</div>
+        </div>
+        <div class="settingbox">
+            <p>Muzyka</p>
+            <input class="setright" type="range" min="0" max="100" value="100">
+        </div>
+        <div class="settingbox">
+            <p>Efekty dźwiękowe</p>
+            <input class="setright" type="range" min="0" max="100" value="100">
+        </div>
     </div>
     <script src="static/index.js"></script>
     <audio id="loadingSound" src="/static/sounds/loading.ogg" autoplay></audio>

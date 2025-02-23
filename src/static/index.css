@@ -680,3 +680,31 @@ input:checked + .slider:before {
     display: flex;
     align-items: flex-end;
 }
+
+#settings {
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    height: 60%;
+    width: 60%;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    display: none;
+    z-index: 1000;
+    animation: slideright-popup 0.5s;
+}
+
+#close_settings {
+    text-align: right;
+    margin-left: auto;
+}
+
+.settingbox {
+    display: flex;
+}
+
+.setright {
+    text-align: right;
+    margin-left: auto;
+}

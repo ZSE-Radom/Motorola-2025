@@ -252,42 +252,42 @@ function renderSetup(game_type) {
 
 function updateChessBoard(boardData) {
     for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        const squareId = i * 8 + j;
-        const square = document.getElementById(squareId);
-        const newPiece = boardData[i][j] ? boardData[i][j].trim() : '';
-        const currentPiece = square.dataset.piece || '';
-  
-        if (currentPiece !== newPiece) {
-          square.dataset.piece = newPiece;
-  
-          const pieceImg = square.querySelector('img.piece');
-  
-          if (newPiece === '') {
-            if (pieceImg) {
-              pieceImg.remove();
+        for (let j = 0; j < 8; j++) {
+            const squareId = i * 8 + j;
+            const square = document.getElementById(squareId);
+            const newPiece = boardData[i][j] ? boardData[i][j].trim() : '';
+            const currentPiece = square.dataset.piece || '';
+
+            if (currentPiece !== newPiece) {
+                square.dataset.piece = newPiece;
+
+                const pieceImg = square.querySelector('img.piece');
+
+                if (newPiece === '') {
+                    if (pieceImg) {
+                        pieceImg.remove();
+                    }
+                } else {
+                    let src;
+                    if (newPiece === newPiece.toUpperCase()) {
+                        src = `/static/figures/${newPiece}x.svg`;
+                    } else {
+                        src = `/static/figures/${newPiece}.svg`;
+                    }
+
+                    if (pieceImg) {
+                        pieceImg.src = src;
+                    } else {
+                        const newImg = document.createElement('img');
+                        newImg.className = 'piece';
+                        newImg.src = src;
+                        square.insertBefore(newImg, square.firstChild);
+                    }
+                }
             }
-          } else {
-            let src;
-            if (newPiece === newPiece.toUpperCase()) {
-              src = `/static/figures/${newPiece}x.svg`;
-            } else {
-              src = `/static/figures/${newPiece}.svg`;
-            }
-  
-            if (pieceImg) {
-              pieceImg.src = src;
-            } else {
-              const newImg = document.createElement('img');
-              newImg.className = 'piece';
-              newImg.src = src;
-              square.insertBefore(newImg, square.firstChild);
-            }
-          }
         }
-      }
     }
-  }
+}
 
   function initChessBoard(boardData) {
     document.getElementById('chessGame').style.display = 'flex';
@@ -418,6 +418,10 @@ function highlightValidMoves(moves, posx, posy) {
 }
 
 function executeMove(posx, posy, newPosx, newPosy) {
+    if (posx === newPosx && posy === newPosy) {
+        createPopUp('error', 'Niepoprawny ruch', 'Nie możesz przenieść figury na to samo pole.');
+        return;
+    }
     fetch('/move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

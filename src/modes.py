@@ -29,6 +29,7 @@ class Mode:
         self.one_player = one_player
         self.human_color = human_color
         self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
+        self.bot_has_moved = False
         if one_player:
             self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
 
@@ -247,8 +248,9 @@ class Mode:
             self.check_winner()
 
             if self.one_player and self.current_turn == self.bot_color and self.running:
-                    add_event(self.session_id, 'bot_move_begin')
-                    threading.Thread(target=self.perform_bot_move, daemon=True).start()
+                add_event(self.session_id, 'bot_move_begin')
+                self.bot_has_moved = False
+                threading.Thread(target=self.perform_bot_move, daemon=True).start()
 
 
     def check_winner(self):
@@ -300,12 +302,16 @@ class Mode:
 
 
     def perform_bot_move(self):
+        if self.bot_has_moved:
+            return
+        
         bot_move = self.bot.get_move(self.board, self.current_turn)
         if bot_move is None:
             self.resign()
             return
 
-        self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)        
+        self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
+        self.bot_has_moved = True
         add_event(self.session_id, 'bot_move_finish')
         print("Board after bot move:")
         self.print_board(self.board)
@@ -315,10 +321,7 @@ class Mode:
             self.winner = winner
             self.running = False
             add_event(self.session_id, 'end')
-        else:
-            if self.one_player and self.current_turn == self.bot_color and self.running:
-                print('probuje ruszyc bota')
-                threading.Thread(target=self.perform_bot_move, daemon=True).start()
+
 
 
 class ClassicMode(Mode):
