@@ -550,61 +550,96 @@ function closeModes() {
 
 function checkForEvents() {
     fetch('/events')
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return res.json();
+    })
     .then(data => {
         if (data.error) {
             createPopUp('error', 'Błąd z połączeniem', data.error);
-        } else {
-            for (const event of data.events) {
-                if (event === 'resign') {
-                    animateChessBoard('close');
-                    setTimeout(() => {
-                        document.getElementById('chessGame').style.display = 'none';
-                        animateMainMenu('open');
-                        document.getElementById('mainmenu').style.display = 'block';
-                        createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, jego przeciwnik się poddał!');
-                        setTimeout(() => {
-                            unsetIntervals();
-                        }, 5000);
-                    }, 1500);
-                } else if (event === 'draw') {
-                    animateChessBoard('close');
-                    setTimeout(() => {
-                        document.getElementById('chessGame').style.display = 'none';
-                        animateMainMenu('open');
-                        document.getElementById('mainmenu').style.display = 'block';
-                        createPopUp('info', 'Koniec gry', 'Remis!');
-                        setTimeout(() => {
-                            unsetIntervals();
-                        }, 5000);
-                    }, 1500);
-                } else if (event === 'time_over') {
-                    animateChessBoard('close');
-                    setTimeout(() => {
-                        document.getElementById('chessGame').style.display = 'none';
-                        animateMainMenu('open');
-                        document.getElementById('mainmenu').style.display = 'block';
-                        createPopUp('info', 'Koniec gry', 'Gracz ' + data.winner + ' wygrał, czas drugiego gracza minął!');
-                        setTimeout(() => {
-                            unsetIntervals();
-                        }, 5000);
-                    }, 1500);
-                } else if (event === 'end') {
-                    animateChessBoard('close');
-                    setTimeout(() => {
-                        document.getElementById('chessGame').style.display = 'none';
-                        animateMainMenu('open');
-                        document.getElementById('mainmenu').style.display = 'block';
-                        createPopUp('info', 'Koniec gry', 'Gra została zakończona!');
-                        setTimeout(() => {
-                            unsetIntervals();
-                        }, 5000);
-                    }, 1500);
-                } else {
+            return;
+        }
+        
+        if (!data.events || !Array.isArray(data.events)) {
+            return;
+        }
+
+        for (const event of data.events) {
+            switch(event) {
+                case 'resign':
+                    handleGameEnd('Koniec gry', 'Gracz się poddał!');
+                    break;
+                case 'draw':
+                    handleGameEnd('Koniec gry', 'Remis!');
+                    break;
+                case 'time_over':
+                    handleGameEnd('Koniec gry', 'Czas się skończył!');
+                    break;
+                case 'end':
+                    handleGameEnd('Koniec gry', 'Gra została zakończona!');
+                    break;
+                case 'check':
+                    createPopUp('info', 'Szach!', 'Twój król jest atakowany!');
+                    break;
+                case 'promotion':
+                    handlePromotion();
+                    break;
+                case 'bot_move_begin':
+                    document.body.style.cursor = 'wait';
+                    break;
+                case 'bot_move_finish':
+                    document.body.style.cursor = 'default';
+                    refreshGameState();
+                    break;
+                default:
                     createPopUp('info', 'Zdarzenie', event);
-                }
             }
         }
+    })
+    .catch(error => {
+        console.error('Error checking events:', error);
+        createPopUp('error', 'Błąd połączenia', 'Nie można pobrać zdarzeń z serwera.');
+    });
+}
+
+function handleGameEnd(title, message) {
+    animateChessBoard('close');
+    setTimeout(() => {
+        document.getElementById('chessGame').style.display = 'none';
+        animateMainMenu('open');
+        document.getElementById('mainmenu').style.display = 'block';
+        createPopUp('info', title, message);
+        unsetIntervals();
+    }, 1500);
+}
+
+function handlePromotion() {
+    // TODO: Implement promotion piece selection UI
+    // For now, automatically promote to Queen
+    createPopUp('info', 'Promocja', 'Pionek został promowany do Hetmana');
+}
+
+function refreshGameState() {
+    fetch('/stats')
+    .then(res => {
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.error) {
+            createPopUp('error', 'Błąd', data.error);
+            return;
+        }
+        updateChessBoard(data);
+        updateTimers(data.timer);
+    })
+    .catch(error => {
+        console.error('Error refreshing game state:', error);
+        createPopUp('error', 'Błąd odświeżania', 'Nie można pobrać stanu gry z serwera.');
     });
 }
 

@@ -137,13 +137,29 @@ class Mode:
     
 
     def check_checkmate(self):
+        if not self.check_for_check():
+            return False
+        
         for i in range(8):
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
                     self.current_turn == "Czarny" and self.board[i][j].islower()):
                     self.highlight_moves(i, j, None)
-                    if self.valid_moves:
-                        return False
+                    for move in self.valid_moves:
+                        # Try the move
+                        piece = self.board[i][j]
+                        self.board[i][j] = " "
+                        old_piece = self.board[move[0]][move[1]]
+                        self.board[move[0]][move[1]] = piece
+                        
+                        still_in_check = self.check_for_check()
+                        
+                        # Undo the move
+                        self.board[i][j] = piece
+                        self.board[move[0]][move[1]] = old_piece
+                        
+                        if not still_in_check:
+                            return False
         return True
 
 
@@ -154,11 +170,15 @@ class Mode:
                 if self.board[i][j] == ('K' if self.current_turn == "Biały" else 'k'):
                     king_position = (i, j)
                     break
+            if king_position:
+                break
+            
         if not king_position:
-            return
+            return True
 
         x, y = king_position
         opponent_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
+        is_checked = False
 
         for i in range(8):
             for j in range(8):
@@ -166,8 +186,14 @@ class Mode:
                 if (opponent_turn == "Biały" and piece.isupper()) or (opponent_turn == "Czarny" and piece.islower()):
                     self.highlight_moves(i, j, None)
                     if (x, y) in self.valid_moves:
-                        self.show_check_warning()
-                        return
+                        is_checked = True
+                        break
+            if is_checked:
+                break
+
+        if is_checked:
+            self.show_check_warning()
+        return is_checked
 
         
     def show_check_warning(self):
@@ -177,9 +203,18 @@ class Mode:
 
     def prompt_promotion(self):
         add_event(self.session_id, 'promotion')
-        print('promocja szacha')
-        return "Q"
-        # TODO
+        if self.web:
+            # For web interface, default to Queen for now
+            # TODO: Implement proper promotion choice in web UI
+            return 'Q' if self.current_turn == "Biały" else 'q'
+        else:
+            # For GUI interface
+            valid_pieces = ['Q', 'R', 'B', 'N'] if self.current_turn == "Biały" else ['q', 'r', 'b', 'n']
+            while True:
+                print("Choose promotion piece (Q/R/B/N):")
+                choice = input().upper()
+                if choice in ['Q', 'R', 'B', 'N']:
+                    return choice if self.current_turn == "Biały" else choice.lower()
         
 
     def reset_highlights(self, buttons):

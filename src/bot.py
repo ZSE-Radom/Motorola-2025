@@ -187,6 +187,17 @@ def make_move(board, move):
 
 def evaluate_board(board):
     score = 0
+    # Check for checkmate/stalemate
+    white_moves = generate_all_legal_moves(board, "Biały")
+    black_moves = generate_all_legal_moves(board, "Czarny")
+    
+    if not white_moves and is_in_check(board, "Biały"):
+        return -math.inf  # Black wins
+    if not black_moves and is_in_check(board, "Czarny"):
+        return math.inf   # White wins
+    if not white_moves or not black_moves:
+        return 0  # Stalemate
+        
     for x in range(8):
         for y in range(8):
             piece = board[x][y]
@@ -201,8 +212,16 @@ def evaluate_board(board):
                 value += KNIGHT_TABLE[x][y]
             elif piece == 'n':
                 value += KNIGHT_TABLE[7 - x][y]
+            # Add mobility bonus
+            if piece.isupper():
+                moves = generate_piece_moves(board, x, y)
+                value += len(moves) * 0.1
+            else:
+                moves = generate_piece_moves(board, x, y)
+                value -= len(moves) * 0.1
+            # Add center control bonus
             if (x, y) in CENTER_SQUARES:
-                value += 0.2
+                value += 0.3 if piece.isupper() else -0.3
             if piece.isupper():
                 score += value
             else:
@@ -238,6 +257,10 @@ class ChessBot:
         legal_moves = generate_all_legal_moves(board, current_turn)
         if not legal_moves:
             return None
+        
+        # Add randomization to prevent repetitive moves
+        if random.random() < 0.1:  # 10% chance of random move
+            return random.choice(legal_moves)
         
         _, best_move = self.minimax(board, self.search_depth, -math.inf, math.inf, maximizing, current_turn)
         return best_move
