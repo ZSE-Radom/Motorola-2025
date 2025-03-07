@@ -11,6 +11,21 @@
     <div id="mainmenu">
         <div id="header">
             <h1 id="title">Srotorola szachy</h1>
+            <div id="musicplayer">
+                <div id="cover"></div>
+                <div id="musicplayerflex">
+                    <div id="musicplayerInfo">
+                        <div id="musicplayerTitle">test</div>
+                        <div id="musicplayerArtist">M. P.</div>
+                    </div>
+                    <div id="musicplayerControls">
+                        <button id="musicplayerPrev" onclick="prevMusic()">⏮️</button>
+                        <button id="musicplayerPlay" onclick="playMusic()">▶️</button>
+                        <button id="musicplayerPause" onclick="pauseMusic()">⏸️</button>
+                        <button id="musicplayerNext" onclick="nextMusic()">⏭️</button>
+                    </div>
+                </div>
+            </div>
             <div id="profile">
                 <div id="profilePfp"><img id="profilePfpSrc" src=""></div>
                 <div>
@@ -30,6 +45,10 @@
         <div id="feed">
             <h2 id="feedTitle">Aktualności</h2>
             <div id="feedContent">
+                <div class="feedItem" id="feedItem0">
+                    <div class="feedItemTitle">Aktualne informacje</div>
+                    <div class="feedItemContent"><span id="latest_news"></span></div>
+                </div>
                 <div class="feedItem" id="feedItem1">
                     <div class="feedItemTitle">Zagraj z SochAI</div>
                     <div class="feedItemContent">Nasza najnowsza Sztuczna Głupota</div>
@@ -173,22 +192,28 @@
     </div>
     <div id="settings">
         <div style="display: flex; font-size: 2rem; font-weight: 800;">
-            <div id="title_settings">DUPA</div>
+            <div id="title_settings">USTAWIENIA GRY</div>
             <div id="close_settings" onclick="document.getElementById('settings').style.display = 'none'">X</div>
         </div>
         <div class="settingbox">
             <p>Muzyka</p>
-            <input class="setright" type="range" min="0" max="100" value="100">
+            <input class="setright" type="range" id="musicvol" min="0" max="100" value="100">
         </div>
         <div class="settingbox">
             <p>Efekty dźwiękowe</p>
-            <input class="setright" type="range" min="0" max="100" value="100">
+            <input class="setright" type="range" id="sfxvol" min="0" max="100" value="100">
+        </div>
+        <div class="settingbox">
+            <p>Tryb ciemny</p>
+            <label class="setright" class="switch">
+                <input type="checkbox" id="darkmode">
+            </label>
         </div>
     </div>
     <script src="static/index.js"></script>
-    <audio id="loadingSound" src="/static/sounds/loading.ogg" autoplay></audio>
-    <audio id="clickSound" src="/static/sounds/click.ogg"></audio>
-    <audio id="btnClickSound" src="/static/sounds/btn.ogg"></audio>
-    <audio id="notifySound" src="/static/sounds/notify.ogg"></audio>
+    <audio id="loadingSound" class="sfx" src="/static/sounds/loading.ogg" autoplay></audio>
+    <audio id="clickSound" class="sfx" src="/static/sounds/click.ogg"></audio>
+    <audio id="btnClickSound" class="sfx" src="/static/sounds/btn.ogg"></audio>
+    <audio id="notifySound" class="sfx" src="/static/sounds/notify.ogg"></audio>
 </body>
 </html>

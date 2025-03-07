@@ -3,6 +3,7 @@ let username = '';
 let setupOptions = {};
 let currentlyPlaying = false;
 let boardInitialized = false;
+let mutePopups = false;
 
 function fetchProfile() {
     fetch('/profile', {
@@ -442,7 +443,7 @@ function refreshTimer() {
       .then(res => res.json())
       .then(data => {
         if (data.error) {
-          displayErrorPopUp('Błąd z połączeniem', data.error);
+          createPopUp('Błąd z połączeniem', data.error);
         } else {
           if (data.running === true) {
             if (!boardInitialized) {
@@ -460,6 +461,7 @@ function refreshTimer() {
       });
   }
 function createPopUp(type, title, content) {
+    if (mutePopups) return;
     document.getElementById('notifySound').play();
     popUpCount++;
 
@@ -601,6 +603,7 @@ function checkForEvents() {
     .catch(error => {
         console.error('Error checking events:', error);
         createPopUp('error', 'Błąd połączenia', 'Nie można pobrać zdarzeń z serwera.');
+        terminateGame();
     });
 }
 
@@ -641,6 +644,15 @@ function refreshGameState() {
         console.error('Error refreshing game state:', error);
         createPopUp('error', 'Błąd odświeżania', 'Nie można pobrać stanu gry z serwera.');
     });
+}
+
+function terminateGame() {
+    mutePopups = true;
+    document.getElementById('loading').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('loading').style.opacity = '1';
+    }, 100);
+    document.getElementById('loinfo').textContent = 'Utracono połączenie z serwerem...';
 }
 
 const slider = document.querySelector('#feed');
@@ -710,11 +722,12 @@ function animateChessBoard(type) {
     }
 }
 
+const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
+let currentSongIndex = Math.floor(Math.random() * songs.length);
+const audio = new Audio(`/static/soundtrack/${songs[currentSongIndex]}.mp3`);
+audio.loop = false;
+
 function playSoundtrack() {
-    const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
-    let currentSongIndex = Math.floor(Math.random() * songs.length);
-    const audio = new Audio(`/static/soundtrack/${songs[currentSongIndex]}.mp3`);
-    audio.loop = false;
     audio.play();
     nowPlaying(songs[currentSongIndex]);
 
@@ -730,9 +743,117 @@ function playSoundtrack() {
     });
 }
 
-function nowPlaying(name) {
-    createPopUp('info', '🎶Odtwarzanie', 'Teraz gra: ' + name + '<br>Utworzone przez: Patyna');
+function nowPlaying(name, popup=true) {
+    if (popup) createPopUp('info', '🎶Odtwarzanie', 'Teraz gra: ' + name + '<br>Utworzone przez: Patyna');
+    document.getElementById('musicplayerTitle').textContent = name;
 }
+
+function pauseMusic() {
+    if (audio.paused) {
+        audio.play();
+    } else {
+        audio.pause();
+    }
+}
+
+function playMusic() {
+    audio.play();
+}
+
+function nextMusic() {
+    let newSongIndex;
+    do {
+        newSongIndex = Math.floor(Math.random() * songs.length);
+    } while (newSongIndex === currentSongIndex);
+    currentSongIndex = newSongIndex;
+    audio.src = `/static/soundtrack/${songs[currentSongIndex]}.mp3`;
+    audio.play();
+    nowPlaying(songs[currentSongIndex], false);
+}
+
+function prevMusic() {
+    let newSongIndex;
+    do {
+        newSongIndex = Math.floor(Math.random() * songs.length);
+    } while (newSongIndex === currentSongIndex);
+    currentSongIndex = newSongIndex;
+    audio.src = `/static/soundtrack/${songs[currentSongIndex]}.mp3`;
+    audio.play();
+    nowPlaying(songs[currentSongIndex], false);
+}
+
+document.addEventListener('keydown', () => {
+    document.getElementById('loading').style.backgroundImage = 'url("/static/feed/1.png")';
+});
+document.addEventListener('keyup', () => {
+    document.getElementById('loading').style.backgroundImage = '';
+});
+
+fetch('/static/changelog_bar')
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('latest_news').innerHTML = data;
+    })
+    .catch(error => {
+        console.error('Error fetching changelog:', error);
+    });
+
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.getElementById('darkmode').checked = true;
+    document.body.classList.add('dark');
+}
+
+document.getElementById('musicvol').addEventListener('input', (e) => {
+    const volume = e.target.value / 100;
+    audio.volume = volume;
+    localStorage.setItem('musicVolume', volume);
+});
+
+document.getElementById('sfxvol').addEventListener('input', (e) => {
+    const volume = e.target.value / 100;
+    Array.from(document.getElementsByClassName('sfx')).forEach(sfx => {
+        sfx.volume = volume;
+    });
+    localStorage.setItem('sfxVolume', volume);
+});
+
+document.getElementById('darkmode').addEventListener('change', (e) => {
+    if (e.target.checked) {
+        document.body.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+    } else {
+        document.body.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+    }
+});
+
+window.addEventListener('load', () => {
+    const musicVolume = localStorage.getItem('musicVolume');
+    if (musicVolume !== null) {
+        audio.volume = parseFloat(musicVolume);
+        document.getElementById('musicvol').value = musicVolume * 100;
+    } else {
+        audio.volume = 0.75;
+        document.getElementById('musicvol').value = 75;
+    }
+
+    const sfxVolume = localStorage.getItem('sfxVolume');
+    if (sfxVolume !== null) {
+        Array.from(document.getElementsByClassName('sfx')).forEach(sfx => {
+            sfx.volume = parseFloat(sfxVolume);
+        });
+        document.getElementById('sfxvol').value = sfxVolume * 100;
+    }
+
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'true' || (darkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark');
+        document.getElementById('darkmode').checked = true;
+    } else {
+        document.body.classList.remove('dark');
+        document.getElementById('darkmode').checked = false;
+    }
+});
 
 document.addEventListener('click', (e) => {
     // if is button

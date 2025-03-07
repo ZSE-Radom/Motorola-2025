@@ -243,6 +243,7 @@ def order_moves(board, moves, current_turn, maximizing):
         return score
     return sorted(moves, key=move_score, reverse=maximizing)
 
+
 class ChessBot:
     def __init__(self, bot_color="Czarny", search_depth=4):
         self.bot_color = bot_color
