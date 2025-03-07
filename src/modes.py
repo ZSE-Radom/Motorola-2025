@@ -394,7 +394,87 @@ class BlitzMode(Mode):
             ["P", "P", "P", "P", "P", "P", "P", "P"],
             ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ]
+
+
+class GMMode(Mode):
+    def __init__(self, name, gui, one_player=True, human_color="Biały"):
+        super().__init__(name, gui, one_player, human_color)
+        self.master_db = MasterDatabase()
+        self.master_db.load_default_archmasters()
+        self.game_mode = "arcymistrz"
+        self.suggestions_enabled = False
+        self.nerd_view_enabled = False
+        self.web = True
+        
+    def initialize_board(self):
+        # Use the classic chess setup
+        return [
+            ["R", "N", "B", "Q", "K", "B", "N", "R"],
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            [" ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " "],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
+            ["r", "n", "b", "q", "k", "b", "n", "r"]
+        ]
     
+    def perform_bot_move(self):
+        if not self.running or self.current_turn != self.bot_color:
+            return
+        
+        # First try to get a move from the master database
+        move_suggestion = self.master_db.get_move_suggestion(self.board)
+        
+        if move_suggestion:
+            start = move_suggestion['from']
+            end = move_suggestion['to']
+            
+            # Make the move
+            self.move_piece(start, end)
+            self.bot_has_moved = True
+            add_event(self.session_id, {
+                'type': 'arcymaster_move',
+                'from': start,
+                'to': end,
+                'archmaster': move_suggestion['archmaster']
+            })
+            
+        else:
+            # If no move found in database, use the regular bot
+            super().perform_bot_move()
+    
+    def toggle_suggestions(self):
+        self.suggestions_enabled = not self.suggestions_enabled
+        return self.suggestions_enabled
+        
+    def get_move_suggestions(self):
+        if not self.suggestions_enabled:
+            return []
+        
+        return self.master_db.get_move_statistics(self.board)
+    
+    def toggle_nerd_view(self):
+        self.nerd_view_enabled = not self.nerd_view_enabled
+        return self.nerd_view_enabled
+    
+    def get_nerd_view_data(self):
+        # Get current position statistics
+        current_stats = self.master_db.get_move_statistics(self.board)
+        
+        # Get database stats
+        db_stats = self.master_db.get_database_stats()
+        
+        return {
+            "move_suggestions": current_stats,
+            "database_stats": db_stats
+        }
+    
+    def import_pgn(self, file_path):
+        """Import a PGN file into the master database"""
+        return self.master_db.import_pgn(file_path)
+
+
 
 class X960Mode(Mode):
     def __init__(self, gui, one_player=False, human_color="Biały"):
