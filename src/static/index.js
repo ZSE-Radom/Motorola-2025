@@ -74,7 +74,7 @@ function startGame(type, mode) {
                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                     initChessBoard(data.board, data.timer);
                     setInterval(refreshTimer, 500);
-                    setInterval(checkForEvents, 500);
+                    //setInterval(checkForEvents, 500);
                 }
             });
         }
@@ -83,7 +83,7 @@ function startGame(type, mode) {
 
 function unsetIntervals() {
     clearInterval(refreshTimer);
-    clearInterval(checkForEvents);
+    //clearInterval(checkForEvents);
 }
 
 function renderSetup(game_type) {
@@ -212,7 +212,7 @@ function renderSetup(game_type) {
                                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                                     initChessBoard(data.board, data.timer);
                                     setInterval(refreshTimer, 500);
-                                    setInterval(checkForEvents, 500);
+                                    //setInterval(checkForEvents, 500);
                                 }, 1000);
                             }
                         });
@@ -244,7 +244,7 @@ function renderSetup(game_type) {
                 animateChessBoard('game');
                 initChessBoard(data.board, data.timer);
                 setInterval(refreshTimer, 500);
-                setInterval(checkForEvents, 500);
+                //setInterval(checkForEvents, 500);
             }
         });
     }
@@ -411,6 +411,8 @@ function highlightValidMoves(moves, posx, posy) {
         validMoves[0].classList.remove('validMove');
     }
 
+    if (moves.length === 0) return; 
+
     moves.forEach(([newPosx, newPosy]) => {
         const targetSquare = document.getElementById(newPosx * 8 + newPosy);
         targetSquare.classList.add('validMove');
@@ -419,10 +421,9 @@ function highlightValidMoves(moves, posx, posy) {
 }
 
 function executeMove(posx, posy, newPosx, newPosy) {
-    if (posx === newPosx && posy === newPosy) {
-        createPopUp('error', 'Niepoprawny ruch', 'Nie możesz przenieść figury na to samo pole.');
-        return;
-    }
+    const chessBoard = document.getElementById('chessBoard');
+    chessBoard.style.pointerEvents = 'none'; // Disable input
+
     fetch('/move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -430,11 +431,12 @@ function executeMove(posx, posy, newPosx, newPosy) {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.error) {
-            createPopUp('error', 'Błąd z połączeniem', data.error);
-        } else {
-            //initChessBoard(data.board, data.timer);
-        }
+        //updateChessBoard(data.board);
+        chessBoard.style.pointerEvents = 'auto'; // Re-enable
+    })
+    .catch(error => {
+        chessBoard.style.pointerEvents = 'auto';
+        createPopUp('error', 'Błąd', error.message);
     });
 }
 
@@ -453,13 +455,50 @@ function refreshTimer() {
             }
             updateTimers(data.timer);
             animateChessBoard('game');
-          } else {
-            return 'OK';
-          }
+          } 
+
+          if (!data.events) {
+            return;
+            }
+
+        let events = Array.isArray(data.events) ? data.events : [data.events];
+
+        for (const event of events) {
+            switch(event) {
+                case 'resign':
+                    handleGameEnd('Koniec gry', 'Gracz się poddał!');
+                    break;
+                case 'draw':
+                    handleGameEnd('Koniec gry', 'Remis!');
+                    break;
+                case 'time_over':
+                    handleGameEnd('Koniec gry', 'Czas się skończył!');
+                    break;
+                case 'end':
+                    handleGameEnd('Koniec gry', 'Gra została zakończona!');
+                    break;
+                case 'check':
+                    createPopUp('info', 'Szach!', 'Twój król jest atakowany!');
+                    break;
+                case 'promotion':
+                    handlePromotion();
+                    break;
+                case 'bot_move_begin':
+                    document.body.style.cursor = 'wait';
+                    break;
+                case 'bot_move_finish':
+                    document.body.style.cursor = 'default';
+                    break;
+                default:
+                    createPopUp('info', 'Zdarzenie', event);
+            }
+        }
+          document.getElementById('chessLog').innerHTML = data.history;
           document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
         }
       });
   }
+
 function createPopUp(type, title, content) {
     if (mutePopups) return;
     document.getElementById('notifySound').play();
@@ -622,28 +661,6 @@ function handlePromotion() {
     // TODO: Implement promotion piece selection UI
     // For now, automatically promote to Queen
     createPopUp('info', 'Promocja', 'Pionek został promowany do Hetmana');
-}
-
-function refreshGameState() {
-    fetch('/stats')
-    .then(res => {
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return res.json();
-    })
-    .then(data => {
-        if (data.error) {
-            createPopUp('error', 'Błąd', data.error);
-            return;
-        }
-        updateChessBoard(data);
-        updateTimers(data.timer);
-    })
-    .catch(error => {
-        console.error('Error refreshing game state:', error);
-        createPopUp('error', 'Błąd odświeżania', 'Nie można pobrać stanu gry z serwera.');
-    });
 }
 
 function terminateGame() {

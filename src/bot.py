@@ -2,6 +2,8 @@ import copy
 import math
 import random
 
+# TODO albo bot wykonuje złe ruchy albo gra tak myśli
+
 PIECE_VALUES = {
     'p': 1, 'P': 1,
     'n': 3, 'N': 3,

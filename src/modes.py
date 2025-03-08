@@ -33,9 +33,7 @@ class Mode:
         if one_player:
             self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
 
-        # Lock for switching turns and timer updates
         self.turn_lock = threading.Lock()
-        # Track castling rights for both sides
         self.castling_rights = {
             "Biały": {"kingside": True, "queenside": True},
             "Czarny": {"kingside": True, "queenside": True}

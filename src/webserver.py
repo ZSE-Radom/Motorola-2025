@@ -118,7 +118,9 @@ def stats():
             'timer': mode_instance.timer,
             'current_turn': mode_instance.current_turn,
             'running': mode_instance.running,
-            'winner': mode_instance.winner
+            'winner': mode_instance.winner,
+            'history': mode_instance.move_history,
+            'events': get_events(session_id)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -137,6 +139,12 @@ def move():
 
         posx, posy, new_posx, new_posy = move_data
         mode_instance = modes_store[session_id]
+        
+        # Add turn validation
+        piece = mode_instance.board[posx][posy]
+        current_color = "Biały" if piece.isupper() else "Czarny"
+        if current_color != mode_instance.current_turn:
+            return jsonify({'error': 'Not your turn'}), 400
 
         mode_instance.move_piece([posx, posy], [new_posx, new_posy])
         return jsonify({
