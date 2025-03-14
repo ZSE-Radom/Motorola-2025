@@ -3,6 +3,8 @@ from modes import ClassicMode, BlitzMode, X960Mode
 from flask_cors import CORS
 import os
 from utils import get_events
+from pgn_parser import PGNParser
+from master_database import MasterDatabase
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
@@ -254,6 +256,44 @@ def get_board_look():
         return jsonify({'board': mode_instance.board})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/getPGN', methods=['GET'])
+def get_pgn():
+    try:
+        session_id = session.get('session_id')
+        if not session_id or session_id not in modes_store:
+            return jsonify({'error': 'Game session not found'}), 400
+
+        mode_instance = modes_store[session_id]
+        pgn = mode_instance.get_pgn()
+        return jsonify({'pgn': pgn})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/loadPGN', methods=['POST'])
+def load_pgn():
+    try:
+        pgn = request.json.get('pgn')
+        if not pgn:
+            return jsonify({'error': 'Invalid PGN data'}), 400
+
+        parser = PGNParser()
+        parser.parse_pgn(pgn)
+        return jsonify({'board': parser.board})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/getMasterDatabase', methods=['GET'])
+def get_master_database():
+    try:
+        master_db = MasterDatabase()
+        return jsonify({'master_db': master_db.database})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

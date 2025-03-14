@@ -289,6 +289,10 @@ class Mode:
         ex, ey = end
         piece = self.board[sx][sy]
 
+        print('Moving piece:', piece, 'from', start, 'to', end)
+        print('board before move:')
+        self.print_board(self.board)
+
         if not bypass_validity and not self.is_valid_move(start, end):
             print("Invalid move!")
             return
@@ -359,6 +363,9 @@ class Mode:
 
         self.check_for_check()
         self.check_winner()
+
+        print('Board after move:')
+        self.print_board(self.board)
 
         if self.one_player and self.current_turn == self.bot_color and self.running:
             add_event(self.session_id, 'bot_move_begin')
