@@ -702,6 +702,14 @@ input:checked + .slider:before {
     align-items: flex-end;
 }
 
+#chessGameStartButtonBot {
+    width: 85%;
+    margin: 1rem 7.5%;
+    border: none;
+    display: flex;
+    align-items: flex-end;
+}
+
 #settings {
     position: absolute;
     top: 20%;

@@ -54,6 +54,7 @@ function gameStart(type) {
 
 function startGame(type, mode) {
     animateMainMenu('close');
+    console.log(type, mode)
     setTimeout(() => {
         document.getElementById('modeList').style.display = 'none';
         document.getElementById('mainmenu').style.display = 'none';
@@ -63,6 +64,26 @@ function startGame(type, mode) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    createPopUp('error', 'Błąd z połączeniem', data.error);
+                } else {
+                    document.getElementById('modeList').style.display = 'none';
+                    document.getElementById('chessGame').style.display = 'flex';
+                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                    initChessBoard(data.board, data.timer);
+                    setInterval(refreshTimer, 500);
+                    //setInterval(checkForEvents, 500);
+                }
+            });
+        } else if (type === 'Bot') {
+            fetch('/startOffline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                //body: JSON.stringify({ one_player: true, mode })
+                body: JSON.stringify({ one_player: true, game_mode: 'classic' })
             })
             .then(res => res.json())
             .then(data => {
@@ -207,6 +228,7 @@ function renderSetup(game_type) {
                                 });
                                 setTimeout(() => {
                                     document.getElementById('chessSetupHuman').style.display = 'none';
+                                    document.getElementById('chessSetupBot').style.display = 'none';
                                     document.getElementById('chessGame').style.display = 'flex';
                                     document.getElementById('chessSocial').style.display = 'block';
                                     document.getElementById('chessStats').style.display = 'block';
@@ -283,8 +305,9 @@ function renderSetup(game_type) {
                     animateChessBoard('setupBot');
                 }, 1500);
 
-                document.getElementById('chessGameStartButton').onclick = function() {
+                document.getElementById('chessGameStartButtonBot').onclick = function() {
                     setupOptions['game_mode'] = 'classic'; // Default mode for bot
+                    setupOptions['one_player'] = true; // TODO
                     fetch('/startOffline', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -310,7 +333,8 @@ function renderSetup(game_type) {
                                 easing: 'ease-in-out'
                             });
                             setTimeout(() => {
-                                document.getElementById('chessSetupHuman').style.display = 'none';
+                                console.log('ddd')
+                                document.getElementById('chessSetupBot').style.display = 'none';
                                 document.getElementById('chessGame').style.display = 'flex';
                                 document.getElementById('chessSocial').style.display = 'block';
                                 document.getElementById('chessStats').style.display = 'block';
