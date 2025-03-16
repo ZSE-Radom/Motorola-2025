@@ -2,3 +2,5 @@
 src/bot.xpy
 src/modes.xpy
 src/mortka/*
+.venv/*
+.idea/*
