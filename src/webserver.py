@@ -51,13 +51,12 @@ def start_offline():
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
 
-        mode_instance = available_modes[mode_name](None, one_player=one_player, human_color=human_color)
+        mode_instance = available_modes[mode_name](one_player=one_player, human_color=human_color)
         session_id = session.get('session_id') or os.urandom(12).hex()
         session['session_id'] = session_id
         mode_instance.session_id = session_id
 
         modes_store[session_id] = mode_instance
-        mode_instance.web = True
         mode_instance.game_mode = mode_name
 
         return jsonify({
@@ -87,7 +86,6 @@ def start_online():
         session['session_id'] = session_id
 
         modes_store[session_id] = mode_instance
-        mode_instance.web = True
 
         return jsonify({'session_id': session_id})
     except Exception as e:

@@ -8,7 +8,7 @@ from bot import ChessBot
 
 
 class Mode:    
-    def __init__(self, name, gui, one_player=False, human_color="Biały"):
+    def __init__(self, name, one_player=False, human_color="Biały"):
         self.name = name
         self.board = self.initialize_board()
         self.current_turn = "Biały"
@@ -18,7 +18,6 @@ class Mode:
         self.selected_piece = None
         self.valid_moves = []
         self.last_move = None
-        self.web = False
         self.winner = None
         self.game_type = "offline"  # offline and so
         self.game_mode = ""  # classic and so
@@ -85,14 +84,10 @@ class Mode:
             # Standard forward move
             if 0 <= x + forward < 8 and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + forward, y))
-                if not self.web and buttons:
-                    buttons[x + forward][y].config(bg="light blue")
-
+   
                 # Double move from starting position
                 if x == start_row and 0 <= x + 2 * forward < 8 and self.board[x + forward][y] == " " and self.board[x + 2 * forward][y] == " ":
                     self.valid_moves.append((x + 2 * forward, y))
-                    if not self.web and buttons:
-                        buttons[x + 2 * forward][y].config(bg="light blue")
 
             # Diagonal capture moves
             for dx in [-1, 1]:
@@ -100,8 +95,6 @@ class Mode:
                     target = self.board[x + forward][y + dx]
                     if target != " " and target.islower() != piece.islower():
                         self.valid_moves.append((x + forward, y + dx))
-                        if not self.web and buttons:
-                            buttons[x + forward][y + dx].config(bg="light blue")
 
             # En passant
             if self.last_move:
@@ -109,8 +102,6 @@ class Mode:
                 if last_piece.lower() == 'p' and abs(sx - ex) == 2 and sy == y and ex == x + forward:
                     en_passant_target = (x + forward, y + (1 if sy < y else -1))
                     self.valid_moves.append(en_passant_target)
-                    if not self.web and buttons:
-                        buttons[en_passant_target[0]][en_passant_target[1]].config(bg="light blue")
 
         elif piece.lower() in ['r', 'b', 'q']:
             for direction in directions.get(piece.lower(), []):
@@ -121,8 +112,6 @@ class Mode:
                     if self.board[nx][ny] != " " and self.board[nx][ny].islower() == piece.islower():
                         break
                     self.valid_moves.append((nx, ny))
-                    if not self.web and buttons:
-                        buttons[nx][ny].config(bg="light blue")
 
                     if self.board[nx][ny] != " ":
                         break
@@ -135,16 +124,13 @@ class Mode:
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    if not self.web and buttons:
-                        buttons[nx][ny].config(bg="light blue")
 
         elif piece.lower() == 'k':
             for dx, dy in directions.get(piece.lower(), []):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
-                    if not self.web and buttons:
-                        buttons[nx][ny].config(bg="light blue")
+
             # Castling moves (very simplified check – you might want to add proper check and path safety)
             if self.castling_rights.get(self.current_turn):
                 rights = self.castling_rights[self.current_turn]
@@ -152,18 +138,14 @@ class Mode:
                     # Kingside: check that squares between king and rook are empty
                     if self.board[x][y+1] == " " and self.board[x][y+2] == " ":
                         self.valid_moves.append((x, y+2))
-                        if not self.web and buttons:
-                            buttons[x][y+2].config(bg="light blue")
+
                 if rights.get("queenside"):
                     if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
                         self.valid_moves.append((x, y-2))
-                        if not self.web and buttons:
-                            buttons[x][y-2].config(bg="light blue")
 
         self.check_for_check()
 
-        if self.web:
-            return self.valid_moves
+        return self.valid_moves
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
@@ -235,21 +217,17 @@ class Mode:
 
     def prompt_promotion(self):
         add_event(self.session_id, 'promotion')
-        if self.web:
-            # For web interface, default to Queen for now
-            return 'Q' if self.current_turn == "Biały" else 'q'
+        return 'Q' if self.current_turn == "Biały" else 'q'
+        # TODO wybór
+        '''
         else:
             valid_pieces = ['Q', 'R', 'B', 'N'] if self.current_turn == "Biały" else ['q', 'r', 'b', 'n']
             while True:
                 print("Choose promotion piece (Q/R/B/N):")
                 choice = input().upper()
                 if choice in ['Q', 'R', 'B', 'N']:
-                    return choice if self.current_turn == "Biały" else choice.lower()
-        
-    def reset_highlights(self, buttons):
-        for i in range(8):
-            for j in range(8):
-                buttons[i][j].config(bg="light gray")
+                    return choice if self.current_turn == "Biały" else choice.lower()'
+        '''
 
     def is_valid_move(self, start, end):
         if not self.valid_moves:
@@ -439,8 +417,8 @@ class Mode:
 
 
 class ClassicMode(Mode):
-    def __init__(self, gui, one_player=False, human_color="Biały"):
-        super().__init__("Classic", gui, one_player, human_color)
+    def __init__(self, one_player=False, human_color="Biały"):
+        super().__init__("Classic", one_player, human_color)
         self.game_mode = "Klasyczny"
 
     def initialize_board(self):
@@ -457,8 +435,8 @@ class ClassicMode(Mode):
 
 
 class BlitzMode(Mode):
-    def __init__(self, gui, one_player=False, human_color="Biały"):
-        super().__init__("Blitz", gui, one_player, human_color)
+    def __init__(self, one_player=False, human_color="Biały"):
+        super().__init__("Blitz", one_player, human_color)
         self.timer = {"Biały": 60, "Czarny": 60}
         self.game_mode = "Blitz"
 
@@ -476,14 +454,13 @@ class BlitzMode(Mode):
 
 
 class GMMode(Mode):
-    def __init__(self, name, gui, one_player=True, human_color="Biały"):
-        super().__init__(name, gui, one_player, human_color)
+    def __init__(self, name, one_player=True, human_color="Biały"):
+        super().__init__(name, one_player, human_color)
         self.master_db = MasterDatabase()
         self.master_db.load_default_archmasters()
         self.game_mode = "arcymistrz"
         self.suggestions_enabled = False
         self.nerd_view_enabled = False
-        self.web = True
         
     def initialize_board(self):
         # Use the classic chess setup with inverted colors
@@ -546,8 +523,8 @@ class GMMode(Mode):
     
 
 class X960Mode(Mode):
-    def __init__(self, gui, one_player=False, human_color="Biały"):
-        super().__init__("960", gui, one_player, human_color)
+    def __init__(self, one_player=False, human_color="Biały"):
+        super().__init__("960", one_player, human_color)
         self.game_mode = "Fischer Losowy"
 
     def initialize_board(self):
