@@ -7,7 +7,7 @@ from master_database import MasterDatabase
 from bot import ChessBot
 
 
-class Mode:    
+class Mode:
     def __init__(self, name, one_player=False, human_color="Biały"):
         self.name = name
         self.board = self.initialize_board()
@@ -38,6 +38,24 @@ class Mode:
         }
         self.start_timer()
 
+        self.directions = {
+            'p': [(1, 0)],
+            'P': [(-1, 0)],
+            'r': [(1, 0), (-1, 0), (0, 1), (0, -1)],
+            'R': [(1, 0), (-1, 0), (0, 1), (0, -1)],
+            'n': [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)],
+            'N': [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)],
+            'b': [(1, 1), (1, -1), (-1, 1), (-1, -1)],
+            'B': [(1, 1), (1, -1), (-1, 1), (-1, -1)],
+            'q': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
+            'Q': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
+            'k': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
+            'K': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+        }
+
+    def is_in_board(self, x, y):
+        return 0 <= x < 8 and 0 <= y < 8
+
     def coord_to_notation(self, coord):
         row, col = coord
         return chr(col + ord('a')) + str(8 - row)
@@ -55,24 +73,9 @@ class Mode:
         # Only allow moves if the piece belongs to the current turn
         if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
             return
-        
+
         if self.one_player and self.current_turn == self.bot_color:
             return
-
-        directions = {
-            'p': [(1, 0)],
-            'P': [(-1, 0)],
-            'r': [(1, 0), (-1, 0), (0, 1), (0, -1)],
-            'R': [(1, 0), (-1, 0), (0, 1), (0, -1)],
-            'n': [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)],
-            'N': [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)],
-            'b': [(1, 1), (1, -1), (-1, 1), (-1, -1)],
-            'B': [(1, 1), (1, -1), (-1, 1), (-1, -1)],
-            'q': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
-            'Q': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
-            'k': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)],
-            'K': [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
-        }
 
         self.valid_moves = []
 
@@ -83,7 +86,7 @@ class Mode:
             # Standard forward move
             if 0 <= x + forward < 8 and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + forward, y))
-   
+
                 # Double move from starting position
                 if x == start_row and 0 <= x + 2 * forward < 8 and self.board[x + forward][y] == " " and self.board[x + 2 * forward][y] == " ":
                     self.valid_moves.append((x + 2 * forward, y))
@@ -103,7 +106,7 @@ class Mode:
                     self.valid_moves.append(en_passant_target)
 
         elif piece.lower() in ['r', 'b', 'q']:
-            for direction in directions.get(piece.lower(), []):
+            for direction in self.directions.get(piece.lower(), []):
                 dx, dy = direction
                 nx, ny = x + dx, y + dy
 
@@ -119,13 +122,13 @@ class Mode:
                     ny += dy
 
         elif piece.lower() == 'n':
-            for dx, dy in directions.get(piece.lower(), []):
+            for dx, dy in self.directions.get(piece.lower(), []):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
 
         elif piece.lower() == 'k':
-            for dx, dy in directions.get(piece.lower(), []):
+            for dx, dy in self.directions.get(piece.lower(), []):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
                     self.valid_moves.append((nx, ny))
@@ -148,11 +151,11 @@ class Mode:
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
-    
+
     def check_checkmate(self):
         if not self.check_for_check():
             return False
-        
+
         # Try every move from every piece
         for i in range(8):
             for j in range(8):
@@ -166,13 +169,13 @@ class Mode:
                         backup_to = self.board[move[0]][move[1]]
                         self.board[i][j] = " "
                         self.board[move[0]][move[1]] = piece
-                        
+
                         still_in_check = self.check_for_check()
-                        
+
                         # Undo the move
                         self.board[i][j] = backup_from
                         self.board[move[0]][move[1]] = backup_to
-                        
+
                         if not still_in_check:
                             return False
         return True
@@ -187,7 +190,7 @@ class Mode:
                     break
             if king_position:
                 break
-            
+
         if not king_position:
             return True
 
@@ -232,7 +235,7 @@ class Mode:
         if not self.valid_moves:
             return False
         return (end[0], end[1]) in self.valid_moves
-    
+
     def is_path_clear(self, start, end, piece):
         sx, sy = start
         ex, ey = end
@@ -266,10 +269,7 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
-
         print('Moving piece:', piece, 'from', start, 'to', end)
-        print('board before move:')
-        self.print_board(self.board)
 
         if not bypass_validity and not self.is_valid_move(start, end):
             print("Invalid move!")
@@ -340,9 +340,6 @@ class Mode:
         self.check_for_check()
         self.check_winner()
 
-        print('Board after move:')
-        self.print_board(self.board)
-
         if self.one_player and self.current_turn == self.bot_color and self.running and not self.bot_has_moved:
             add_event(self.session_id, 'bot_move_begin')
             self.bot_has_moved = False
@@ -394,12 +391,13 @@ class Mode:
     def perform_bot_move(self):
         if self.bot_has_moved:
             return
-        
+
         bot_move = self.bot.get_move(self.board, self.current_turn)
         if bot_move is None:
             self.resign()
             return
 
+        print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
         self.bot_has_moved = True
         add_event(self.session_id, 'bot_move_finish')
@@ -458,7 +456,7 @@ class GMMode(Mode):
         self.game_mode = "arcymistrz"
         self.suggestions_enabled = False
         self.nerd_view_enabled = False
-        
+
     def initialize_board(self):
         return [
             ["r", "n", "b", "q", "k", "b", "n", "r"],
@@ -470,16 +468,17 @@ class GMMode(Mode):
             ["P", "P", "P", "P", "P", "P", "P", "P"],
             ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ]
-    
+
     def perform_bot_move(self):
         if not self.running or self.current_turn != self.bot_color:
             return
-        
+
         move_suggestion = self.master_db.get_move_suggestion(self.board)
-        
+
         if move_suggestion:
             start = move_suggestion['from']
             end = move_suggestion['to']
+            print('perform bot move 472')
             self.move_piece(start, end)
             self.bot_has_moved = True
             add_event(self.session_id, {
@@ -490,21 +489,21 @@ class GMMode(Mode):
             })
         else:
             super().perform_bot_move()
-    
+
     def toggle_suggestions(self):
         self.suggestions_enabled = not self.suggestions_enabled
         return self.suggestions_enabled
-        
+
     def get_move_suggestions(self):
         if not self.suggestions_enabled:
             return []
-        
+
         return self.master_db.get_move_statistics(self.board)
-    
+
     def toggle_nerd_view(self):
         self.nerd_view_enabled = not self.nerd_view_enabled
         return self.nerd_view_enabled
-    
+
     def get_nerd_view_data(self):
         current_stats = self.master_db.get_move_statistics(self.board)
         db_stats = self.master_db.get_database_stats()
@@ -512,11 +511,11 @@ class GMMode(Mode):
             "move_suggestions": current_stats,
             "database_stats": db_stats
         }
-    
+
     def import_pgn(self, file_path):
         """Import a PGN file into the master database"""
         return self.master_db.import_pgn(file_path)
-    
+
 
 class X960Mode(Mode):
     def __init__(self, one_player=False, human_color="Biały"):
@@ -532,27 +531,27 @@ class X960Mode(Mode):
                 bishops = random.sample([0, 2, 4, 6], 2) + random.sample([1, 3, 5, 7], 2)
                 back[bishops[0]] = 'b'
                 back[bishops[1]] = 'b'
-                
+
                 # Place queen
                 empty = [i for i in range(8) if back[i] == '']
                 back[random.choice(empty)] = 'q'
                 empty.remove(back.index('q'))
-                
+
                 # Place knights
                 for _ in range(2):
                     idx = random.choice(empty)
                     back[idx] = 'n'
                     empty.remove(idx)
-                
+
                 # Place rook and king
                 empty.sort()
                 back[empty[0]] = 'r'
                 back[empty[1]] = 'k'
                 back[empty[2]] = 'r'
-                
+
                 if back.index('k') > back.index('r', empty[0]+1):
                     continue  # Invalid, retry
-                
+
                 return [p.lower() for p in back], [p.upper() for p in back]
 
         black, white = generate_960_back_rank()

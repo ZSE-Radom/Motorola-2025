@@ -139,7 +139,7 @@ def move():
 
         posx, posy, new_posx, new_posy = move_data
         mode_instance = modes_store[session_id]
-        
+
         # Add turn validation
         piece = mode_instance.board[posx][posy]
         current_color = "Biały" if piece.isupper() else "Czarny"
@@ -188,7 +188,7 @@ def end_session():
         return jsonify({'status': 'session ended'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/resign', methods=['POST'])
 def resign():
@@ -228,7 +228,7 @@ def draw():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/events', methods=['GET'])
 def events():
@@ -241,7 +241,7 @@ def events():
         return jsonify({'events': events})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/getBoardLook', methods=['GET'])
 def get_board_look():
@@ -254,7 +254,7 @@ def get_board_look():
         return jsonify({'board': mode_instance.board})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/getPGN', methods=['GET'])
 def get_pgn():
@@ -268,7 +268,7 @@ def get_pgn():
         return jsonify({'pgn': pgn})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/loadPGN', methods=['POST'])
 def load_pgn():
@@ -282,7 +282,7 @@ def load_pgn():
         return jsonify({'board': parser.board})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/getMasterDatabase', methods=['GET'])
 def get_master_database():
@@ -291,7 +291,7 @@ def get_master_database():
         return jsonify({'master_db': master_db.database})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
