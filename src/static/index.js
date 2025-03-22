@@ -4,6 +4,7 @@ let setupOptions = {};
 let currentlyPlaying = false;
 let boardInitialized = false;
 let mutePopups = false;
+let performing_move = false;
 
 function fetchProfile() {
     fetch('/profile', {
@@ -20,11 +21,11 @@ function fetchProfile() {
             document.getElementById('profileRank').innerHTML = "RANK  " + data.elo;
             document.getElementById('profilePfpSrc').src = '/static/profiles/' + data.pfp;
         }
-    }); 
+    });
 }
 
 function gameStart(type) {
-    /** 
+    /**
     if (type === 'Offline') {
         fetch('/listModes', {
             method: 'GET',
@@ -132,24 +133,24 @@ function renderSetup(game_type) {
                 const slider = toggle.querySelector(".slider");
                 const labelsContainer = toggle.querySelector(".labels");
                 setupOptions['game_type'] = 'offline';
-                
+
                 toggle.style.setProperty("--options", options.length);
 
                 labelsContainer.innerHTML = '';
-                
+
                 options.forEach((option, index) => {
                     const label = document.createElement("span");
                     label.textContent = option;
                     label.dataset.index = index;
                     labelsContainer.appendChild(label);
                 });
-                
+
                 let currentIndex = 0;
                 function updateSlider() {
                     slider.style.left = `${(100 / options.length) * currentIndex}%`;
                     slider.style.background = colors[currentIndex];
                 }
-                
+
                 toggle.addEventListener("click", () => {
                     currentIndex = (currentIndex + 1) % options.length;
                     updateSlider();
@@ -188,7 +189,7 @@ function renderSetup(game_type) {
                         }
                     }
                 });
-                
+
                 updateSlider();
                 setTimeout(() => {
                     document.getElementById('mainmenu').style.display = 'none';
@@ -266,24 +267,24 @@ function renderSetup(game_type) {
                 const slider = toggle.querySelector(".slider");
                 const labelsContainer = toggle.querySelector(".labels");
                 setupOptions['bot_mode'] = 'easy';
-                
+
                 toggle.style.setProperty("--options", botDifficulties.length);
 
                 labelsContainer.innerHTML = '';
-                
+
                 botDifficulties.forEach((difficulty, index) => {
                     const label = document.createElement("span");
                     label.textContent = difficulty;
                     label.dataset.index = index;
                     labelsContainer.appendChild(label);
                 });
-                
+
                 let currentIndex = 0;
                 function updateSlider() {
                     slider.style.left = `${(100 / botDifficulties.length) * currentIndex}%`;
                     slider.style.background = colors[currentIndex];
                 }
-                
+
                 toggle.addEventListener("click", () => {
                     currentIndex = (currentIndex + 1) % botDifficulties.length;
                     updateSlider();
@@ -394,22 +395,22 @@ function updateChessBoard(boardData) {
     document.getElementById('chessGame').style.display = 'flex';
     const chessBoard = document.getElementById('chessBoard');
     const letters = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
-  
+
     chessBoard.innerHTML = '';
-  
+
     for (let i = 0; i < 8; i++) {
       const row = document.createElement('div');
       row.className = 'row';
-  
+
       for (let j = 0; j < 8; j++) {
         const square = document.createElement('div');
         square.className = 'square';
         square.id = i * 8 + j;
         square.dataset.piece = boardData[i][j] ? boardData[i][j].trim() : '';
-  
+
         const isLightSquare = (i + j) % 2 === 0;
         square.style.backgroundColor = isLightSquare ? '#FCF7FF' : '#56876D';
-  
+
         if (square.dataset.piece !== '') {
           const pieceImage = document.createElement('img');
           pieceImage.className = 'piece';
@@ -421,7 +422,7 @@ function updateChessBoard(boardData) {
           }
           square.appendChild(pieceImage);
         }
-  
+
         if (j === 0) {
           const boardNumber = document.createElement('div');
           boardNumber.className = 'boardNumbers';
@@ -429,7 +430,7 @@ function updateChessBoard(boardData) {
           boardNumber.textContent = i + 1;
           square.appendChild(boardNumber);
         }
-  
+
         if (i === 7) {
           const boardLetter = document.createElement('div');
           boardLetter.className = 'boardLetters';
@@ -437,14 +438,14 @@ function updateChessBoard(boardData) {
           boardLetter.textContent = letters[j];
           square.appendChild(boardLetter);
         }
-  
+
         square.addEventListener('click', () => handleSquareClick(i, j));
         row.appendChild(square);
       }
-  
+
       chessBoard.appendChild(row);
     }
-  
+
     boardInitialized = true;
   }
 
@@ -511,7 +512,7 @@ function highlightValidMoves(moves, posx, posy) {
         validMoves[0].classList.remove('validMove');
     }
 
-    if (moves.length === 0) return; 
+    if (!moves?.length) return;
 
     moves.forEach(([newPosx, newPosy]) => {
         const targetSquare = document.getElementById(newPosx * 8 + newPosy);
@@ -521,9 +522,13 @@ function highlightValidMoves(moves, posx, posy) {
 }
 
 function executeMove(posx, posy, newPosx, newPosy) {
+    if (performing_move) {
+        console.log('blocked double move');
+        return
+    };
     const chessBoard = document.getElementById('chessBoard');
     chessBoard.style.pointerEvents = 'none'; // Disable input
-
+    performing_move = true;
     fetch('/move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -533,10 +538,12 @@ function executeMove(posx, posy, newPosx, newPosy) {
     .then(data => {
         //updateChessBoard(data.board);
         chessBoard.style.pointerEvents = 'auto'; // Re-enable
+        performing_move = false;
     })
     .catch(error => {
         chessBoard.style.pointerEvents = 'auto';
         createPopUp('error', 'Błąd', error.message);
+        performing_move = false;
     });
 }
 
@@ -545,7 +552,11 @@ function refreshTimer() {
       .then(res => res.json())
       .then(data => {
         if (data.error) {
-          createPopUp('Błąd z połączeniem', data.error);
+          createPopUp('error', 'Błąd z połączeniem', data.error);
+            document.getElementById('chessGame').style.display = 'none';
+            document.getElementById('mainmenu').style.display = 'block';
+            animateMainMenu('open');
+            unsetIntervals();
         } else {
           if (data.running === true) {
             if (!boardInitialized) {
@@ -555,7 +566,7 @@ function refreshTimer() {
             }
             updateTimers(data.timer);
             animateChessBoard('game');
-          } 
+          }
 
           if (!data.events) {
             return;
@@ -683,7 +694,7 @@ function draw() {
 
 function closeModes() {
     document.getElementById('modeList').style.display = 'none';
-    const collection = document.getElementsByClassName("active"); 
+    const collection = document.getElementsByClassName("active");
     for (const c of collection) {
         c.classList.remove('active');
     }
@@ -702,7 +713,7 @@ function checkForEvents() {
             createPopUp('error', 'Błąd z połączeniem', data.error);
             return;
         }
-        
+
         if (!data.events || !Array.isArray(data.events)) {
             return;
         }
@@ -807,7 +818,7 @@ window.onload = function(){
         playSoundtrack();
         document.getElementById('loading').style.display = 'none';
     }, 2000);
-}; 
+};
 
 function animateMainMenu(type) {
     if (type === 'open') {
