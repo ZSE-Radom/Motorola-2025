@@ -32,7 +32,6 @@ class Mode:
         if one_player:
             self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
 
-        self.turn_lock = threading.Lock()
         self.castling_rights = {
             "Biały": {"kingside": True, "queenside": True},
             "Czarny": {"kingside": True, "queenside": True}
@@ -330,9 +329,7 @@ class Mode:
         self.move_history.append(move_notation)
         self.last_move = (piece, start, end)
 
-        # Switch turns in a thread-safe manner
-        with self.turn_lock:
-            self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
+        self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
 
         if self.check_checkmate():
             self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
@@ -345,10 +342,10 @@ class Mode:
         print('Board after move:')
         self.print_board(self.board)
 
-        if self.one_player and self.current_turn == self.bot_color and self.running:
+        if self.one_player and self.current_turn == self.bot_color and self.running and not self.bot_has_moved:
             add_event(self.session_id, 'bot_move_begin')
             self.bot_has_moved = False
-            threading.Thread(target=self.perform_bot_move, daemon=True).start()
+            self.perform_bot_move()
 
     def check_winner(self):
         pieces = "".join("".join(row) for row in self.board)
@@ -381,12 +378,11 @@ class Mode:
         def timer_thread():
             while self.running:
                 time.sleep(1)
-                with self.turn_lock:
-                    self.timer[self.current_turn] -= 1
-                    if self.timer[self.current_turn] <= 0:
-                        self.running = False
-                        self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
-                        add_event(self.session_id, 'time_over')
+                self.timer[self.current_turn] -= 1
+                if self.timer[self.current_turn] <= 0:
+                    self.running = False
+                    self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+                    add_event(self.session_id, 'time_over')
         threading.Thread(target=timer_thread, daemon=True).start()
 
     def print_board(self, board):
