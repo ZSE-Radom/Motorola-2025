@@ -463,16 +463,15 @@ class GMMode(Mode):
         self.nerd_view_enabled = False
         
     def initialize_board(self):
-        # Use the classic chess setup with inverted colors
         return [
-            ["R", "N", "B", "Q", "K", "B", "N", "R"],
-            ["P", "P", "P", "P", "P", "P", "P", "P"],
-            [" "] * 8,
-            [" "] * 8,
-            [" "] * 8,
-            [" "] * 8,
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
             ["p", "p", "p", "p", "p", "p", "p", "p"],
-            ["r", "n", "b", "q", "k", "b", "n", "r"]
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ]
     
     def perform_bot_move(self):
@@ -528,12 +527,45 @@ class X960Mode(Mode):
         self.game_mode = "Fischer Losowy"
 
     def initialize_board(self):
-        figures = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
-        board = [[" "] * 8 for _ in range(8)]
-        random.shuffle(figures)
-        for i in range(8):
-            board[0][i] = figures[i]
-            board[1][i] = 'p'
-            board[6][i] = 'P'
-            board[7][i] = figures[i].upper()
-        return board
+        def generate_960_back_rank():
+            # Implementation of Chess960 starting position
+            while True:
+                back = [''] * 8
+                # Place bishops
+                bishops = random.sample([0, 2, 4, 6], 2) + random.sample([1, 3, 5, 7], 2)
+                back[bishops[0]] = 'b'
+                back[bishops[1]] = 'b'
+                
+                # Place queen
+                empty = [i for i in range(8) if back[i] == '']
+                back[random.choice(empty)] = 'q'
+                empty.remove(back.index('q'))
+                
+                # Place knights
+                for _ in range(2):
+                    idx = random.choice(empty)
+                    back[idx] = 'n'
+                    empty.remove(idx)
+                
+                # Place rook and king
+                empty.sort()
+                back[empty[0]] = 'r'
+                back[empty[1]] = 'k'
+                back[empty[2]] = 'r'
+                
+                if back.index('k') > back.index('r', empty[0]+1):
+                    continue  # Invalid, retry
+                
+                return [p.lower() for p in back], [p.upper() for p in back]
+
+        black, white = generate_960_back_rank()
+        return [
+            black,
+            ["p"] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            ["P"] * 8,
+            white
+        ]
