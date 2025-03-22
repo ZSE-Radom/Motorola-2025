@@ -30,7 +30,7 @@ class Mode:
         self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
         self.bot_has_moved = False
         if one_player:
-            self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
+            self.bot = ChessBot(bot_color=self.bot_color, search_depth=2)
 
         self.castling_rights = {
             "Biały": {"kingside": True, "queenside": True},
@@ -262,6 +262,7 @@ class Mode:
         return True
 
     def move_piece(self, start, end, bypass_validity=False):
+        self.bot_has_moved = False
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
