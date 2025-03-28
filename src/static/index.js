@@ -8,6 +8,7 @@ let performing_move = false;
 let boardAltered = false;
 let editMode = false;
 let pfpsrclist = ['/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
+let rInterval = null;
 
 function getCustomBoardData() {
     const boardData = [];
@@ -36,7 +37,7 @@ function getCustomBoardData() {
 }
 
 function unsetIntervals() {
-    clearInterval(refreshTimer);
+    clearInterval(rInterval);
     //clearInterval(checkForEvents);
 }
 
@@ -178,7 +179,7 @@ function renderSetup(game_type) {
                                     document.getElementById('chessStats').style.display = 'block';
                                     initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                                     initChessBoard(data.board, data.timer);
-                                    setInterval(refreshTimer, 500);
+                                    rInterval = setInterval(refreshTimer, 500);
                                     //setInterval(checkForEvents, 500);
                                 }, 1000);
                             }
@@ -291,7 +292,7 @@ function renderSetup(game_type) {
                                 document.getElementById('chessStats').style.display = 'block';
                                 initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
                                 initChessBoard(data.board, data.timer);
-                                setInterval(refreshTimer, 500);
+                                rInterval = setInterval(refreshTimer, 500);
                                 //setInterval(checkForEvents, 500);
                             }, 1000);
                         }
