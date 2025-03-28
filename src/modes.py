@@ -83,10 +83,16 @@ class Mode:
             print("Invalid board configuration")
             return
 
+        # Removed by Dawid
+        # Check this Mikołaj before reimplement
+        #         # Only allow moves if the piece belongs to the current turn
+        #         # Fix the inverted logic - this was causing valid_moves to always be empty
+        #         if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+        #             return  # This piece doesn't belong to the current player
+
         # Only allow moves if the piece belongs to the current turn
-        # Fix the inverted logic - this was causing valid_moves to always be empty
-        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
-            return  # This piece doesn't belong to the current player
+        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
+            return
 
         if self.one_player and self.current_turn == self.bot_color:
             return
@@ -202,7 +208,7 @@ class Mode:
         for i in range(8):
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
-                    self.current_turn == "Czarny" and self.board[i][j].islower()):
+                        self.current_turn == "Czarny" and self.board[i][j].islower()):
                     self.highlight_moves(i, j, None)
                     for move in self.valid_moves:
                         piece = self.board[i][j]
