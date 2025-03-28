@@ -2,6 +2,7 @@ import time
 import threading
 import random
 import os
+import copy
 from utils import add_event
 from master_database import MasterDatabase
 from bot import ChessBot
@@ -319,6 +320,7 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
+        board_copy = copy.deepcopy(self.board)
         print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
@@ -377,8 +379,7 @@ class Mode:
 
         # If player move sabotage checkmate, return
         if self.check_for_check():
-            self.board[ex][ey] = " "
-            self.board[sx][sy] = piece
+            self.board = board_copy
             self.show_check_warning()
             return
 
