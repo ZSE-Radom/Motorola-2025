@@ -458,7 +458,6 @@ class Mode:
             self.resign()
             return
 
-        print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
         self.bot_has_moved = True
         add_event(self.session_id, 'bot_move_finish')
@@ -539,7 +538,6 @@ class GMMode(Mode):
         if move_suggestion:
             start = move_suggestion['from']
             end = move_suggestion['to']
-            print('perform bot move 472')
             self.move_piece(start, end)
             self.bot_has_moved = True
             add_event(self.session_id, {
