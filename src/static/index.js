@@ -155,7 +155,7 @@ function renderSetup(game_type) {
                             if (data.error) {
                                 createPopUp('error', 'Błąd z połączeniem', data.error);
                             } else {
-                                
+
                                 document.getElementById('chessSetupHuman').animate([
                                     { transform: 'translateY(0)' },
                                     { transform: 'translateY(-100%)' }
@@ -441,8 +441,8 @@ function handleDrop(event) {
         const newPieceImg = document.createElement('img');
         newPieceImg.className = 'piece';
         const pieceName = piece.split('/').pop().replace('.svg', '').replace('x', '');
-        newPieceImg.src = pieceName === pieceName.toUpperCase() 
-            ? `/static/figures/${pieceName}x.svg` 
+        newPieceImg.src = pieceName === pieceName.toUpperCase()
+            ? `/static/figures/${pieceName}x.svg`
             : `/static/figures/${pieceName}.svg`;
         newPieceImg.dataset.piece = piece;
 
@@ -589,7 +589,7 @@ function executeMove(posx, posy, newPosx, newPosy) {
     if (performing_move) {
         console.log('blocked double move');
         return
-    };
+    }
     const chessBoard = document.getElementById('chessBoardContainer');
     chessBoard.style.pointerEvents = 'none'; // Disable input
     performing_move = true;
@@ -608,7 +608,9 @@ function executeMove(posx, posy, newPosx, newPosy) {
         chessBoard.style.pointerEvents = 'auto';
         createPopUp('error', 'Błąd', error.message);
         performing_move = false;
-    });
+    }).finally(() => {
+        performing_move = false;
+    })
 }
 
 function refreshTimer() {
@@ -639,42 +641,35 @@ function refreshTimer() {
         let events = Array.isArray(data.events) ? data.events : [data.events];
 
         for (const event of events) {
+            const played = localStorage.getItem('played')
             switch(event) {
                 case 'resign':
                     handleGameEnd('Koniec gry', 'Gracz się poddał!');
-                    localStorage.getItem('played').then(played => {
-                        if (played) {
-                            const playedCount = parseInt(played) + 1;
-                            localStorage.setItem('played', playedCount.toString());
-                        }
-                    });
+                    if (played) {
+                        const playedCount = parseInt(played) + 1;
+                        localStorage.setItem('played', playedCount.toString());
+                    }
                     break;
                 case 'draw':
                     handleGameEnd('Koniec gry', 'Remis!');
-                    localStorage.getItem('played').then(played => {
-                        if (played) {
-                            const playedCount = parseInt(played) + 1;
-                            localStorage.setItem('played', playedCount.toString());
-                        }
-                    });
+                    if (played) {
+                        const playedCount = parseInt(played) + 1;
+                        localStorage.setItem('played', playedCount.toString());
+                    }
                     break;
                 case 'time_over':
                     handleGameEnd('Koniec gry', 'Czas się skończył!');
-                    localStorage.getItem('played').then(played => {
-                        if (played) {
-                            const playedCount = parseInt(played) + 1;
-                            localStorage.setItem('played', playedCount.toString());
-                        }
-                    });
+                    if (played) {
+                        const playedCount = parseInt(played) + 1;
+                        localStorage.setItem('played', playedCount.toString());
+                    }
                     break;
                 case 'end':
                     handleGameEnd('Koniec gry', 'Gra została zakończona!');
-                    localStorage.getItem('played').then(played => {
-                        if (played) {
-                            const playedCount = parseInt(played) + 1;
-                            localStorage.setItem('played', playedCount.toString());
-                        }
-                    });
+                    if (played) {
+                        const playedCount = parseInt(played) + 1;
+                        localStorage.setItem('played', playedCount.toString());
+                    }
                     break;
                 case 'check':
                     createPopUp('info', 'Szach!', 'Twój król jest atakowany!');
@@ -1086,6 +1081,9 @@ function loadProfiles() {
     const player1Name = localStorage.getItem('player1Name');
     const player2Name = localStorage.getItem('player2Name');
     const played = localStorage.getItem('played') || 0;
+
+    if (!player1Pfp) localStorage.setItem('player1Pfp', pfpsrclist[0]);
+    if (!player2Pfp) localStorage.setItem('player2Pfp', pfpsrclist[1]);
 
     if (played === null) {
         localStorage.setItem('played', 0);
