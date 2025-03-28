@@ -136,23 +136,45 @@ class Mode:
                     nx += dx
                     ny += dy
 
-        print(self.valid_moves)
+        elif piece.lower() == 'n':
+            for dx, dy in self.directions.get(piece.lower(), []):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
+                    self.valid_moves.append((nx, ny))
+
+        elif piece.lower() == 'k':
+            for dx, dy in self.directions.get(piece.lower(), []):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
+                    self.valid_moves.append((nx, ny))
+
+            # Castling moves (very simplified check – you might want to add proper check and path safety)
+            if self.castling_rights.get(self.current_turn):
+                rights = self.castling_rights[self.current_turn]
+                if rights.get("kingside"):
+                    # Kingside: check that squares between king and rook are empty
+                    if self.board[x][y+1] == " " and self.board[x][y+2] == " ":
+                        self.valid_moves.append((x, y+2))
+
+                if rights.get("queenside"):
+                    if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
+                        self.valid_moves.append((x, y-2))
 
         return self.valid_moves
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
-    
+
     def notation_to_coord(self, notation):
         """Converts chess notation (e.g., 'e2') to board coordinates (row, col)."""
         col = ord(notation[0]) - ord('a')
         row = 8 - int(notation[1])
         return row, col
-    
+
     def revert(self):
         if not self.allow_for_revert:
             return
-        
+
         if len(self.move_history) < 1:
             return
 
