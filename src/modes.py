@@ -25,6 +25,7 @@ class Mode:
         self.first_player_name = os.getlogin()
         self.second_player_name = "Dupa"
         self.session_id = ''
+        self.allow_for_revert = False
 
         self.one_player = one_player
         self.human_color = human_color
@@ -65,36 +66,48 @@ class Mode:
         # Produces long algebraic notation (e.g. "Pe2e4" or "Ke1g1" for castling)
         return piece + self.coord_to_notation(start) + self.coord_to_notation(end)
 
+    def set_board(self, custom_board):
+        """Sets the board and validates its structure."""
+        if len(custom_board) != 8 or any(len(row) != 8 for row in custom_board):
+            raise ValueError("Invalid board dimensions. The board must be 8x8.")
+        self.board = custom_board
+
     def highlight_moves(self, x, y, buttons):
         piece = self.board[x][y]
 
         if piece == " ":
             return
 
-        # Only allow moves if the piece belongs to the current turn
-        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
+        # Ensure the board is initialized properly
+        if not self.board or len(self.board) != 8 or any(len(row) != 8 for row in self.board):
+            print("Invalid board configuration")
             return
+
+        # Only allow moves if the piece belongs to the current turn
+        # Fix the inverted logic - this was causing valid_moves to always be empty
+        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+            return  # This piece doesn't belong to the current player
 
         if self.one_player and self.current_turn == self.bot_color:
             return
 
         self.valid_moves = []
-
+        # Handle pawn moves
         if piece.lower() == 'p':
             forward = -1 if piece.isupper() else 1
             start_row = 6 if piece.isupper() else 1
 
             # Standard forward move
-            if 0 <= x + forward < 8 and self.board[x + forward][y] == " ":
+            if self.is_in_board(x + forward, y) and self.board[x + forward][y] == " ":
                 self.valid_moves.append((x + forward, y))
 
                 # Double move from starting position
-                if x == start_row and 0 <= x + 2 * forward < 8 and self.board[x + forward][y] == " " and self.board[x + 2 * forward][y] == " ":
+                if x == start_row and self.is_in_board(x + 2 * forward, y) and self.board[x + 2 * forward][y] == " ":
                     self.valid_moves.append((x + 2 * forward, y))
 
             # Diagonal capture moves
             for dx in [-1, 1]:
-                if 0 <= x + forward < 8 and 0 <= y + dx < 8:
+                if self.is_in_board(x + forward, y + dx):
                     target = self.board[x + forward][y + dx]
                     if target != " " and target.islower() != piece.islower():
                         self.valid_moves.append((x + forward, y + dx))
@@ -106,12 +119,13 @@ class Mode:
                     en_passant_target = (x + forward, y + (1 if sy < y else -1))
                     self.valid_moves.append(en_passant_target)
 
-        elif piece.lower() in ['r', 'b', 'q']:
+        # Handle other pieces (rook, bishop, queen, knight, king)
+        elif piece.lower() in ['r', 'b', 'q', 'n', 'k']:
             for direction in self.directions.get(piece.lower(), []):
                 dx, dy = direction
                 nx, ny = x + dx, y + dy
 
-                while 0 <= nx < 8 and 0 <= ny < 8:
+                while self.is_in_board(nx, ny):
                     if self.board[nx][ny] != " " and self.board[nx][ny].islower() == piece.islower():
                         break
                     self.valid_moves.append((nx, ny))
@@ -122,29 +136,7 @@ class Mode:
                     nx += dx
                     ny += dy
 
-        elif piece.lower() == 'n':
-            for dx, dy in self.directions.get(piece.lower(), []):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
-                    self.valid_moves.append((nx, ny))
-
-        elif piece.lower() == 'k':
-            for dx, dy in self.directions.get(piece.lower(), []):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
-                    self.valid_moves.append((nx, ny))
-
-            # Castling moves (very simplified check – you might want to add proper check and path safety)
-            if self.castling_rights.get(self.current_turn):
-                rights = self.castling_rights[self.current_turn]
-                if rights.get("kingside"):
-                    # Kingside: check that squares between king and rook are empty
-                    if self.board[x][y+1] == " " and self.board[x][y+2] == " ":
-                        self.valid_moves.append((x, y+2))
-
-                if rights.get("queenside"):
-                    if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
-                        self.valid_moves.append((x, y-2))
+        print(self.valid_moves)
 
         return self.valid_moves
 
@@ -152,11 +144,15 @@ class Mode:
         raise NotImplementedError("initialize_board must be implemented in subclasses")
     
     def notation_to_coord(self, notation):
+        """Converts chess notation (e.g., 'e2') to board coordinates (row, col)."""
         col = ord(notation[0]) - ord('a')
         row = 8 - int(notation[1])
         return row, col
     
     def revert(self):
+        if not self.allow_for_revert:
+            return
+        
         if len(self.move_history) < 1:
             return
 
@@ -173,8 +169,8 @@ class Mode:
         start2 = self.notation_to_coord(start2)
         end2 = self.notation_to_coord(end2)
 
-        self.move_piece(start2, end2, bypass_validity=True)
-        self.move_piece(start1, end1, bypass_validity=True)
+        self.move_piece(end2, start2, bypass_validity=True)
+        self.move_piece(end1, start1, bypass_validity=True)
 
     def check_checkmate(self):
         if not self.check_for_check():

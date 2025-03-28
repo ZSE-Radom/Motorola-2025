@@ -5,102 +5,34 @@ let currentlyPlaying = false;
 let boardInitialized = false;
 let mutePopups = false;
 let performing_move = false;
+let boardAltered = false;
+let editMode = false;
+let pfpsrclist = ['/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
 
-function fetchProfile() {
-    fetch('/profile', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            createPopUp('error', 'Błąd z połączeniem', data.error);
-        } else {
-            username = data.username;
-            document.getElementById('profileName').innerHTML = data.name;
-            document.getElementById('profileRank').innerHTML = "RANK  " + data.elo;
-            document.getElementById('profilePfpSrc').src = '/static/profiles/' + data.pfp;
-        }
-    });
-}
+function getCustomBoardData() {
+    const boardData = [];
+    const chessBoard = document.getElementById('chessBoardContainer');
+    const rows = chessBoard.querySelectorAll('.row');
 
-function gameStart(type) {
-    /**
-    if (type === 'Offline') {
-        fetch('/listModes', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                createPopUp('error', 'Błąd z połączeniem', data.error);
+    rows.forEach(row => {
+        const rowData = [];
+        const squares = row.querySelectorAll('.square');
+        squares.forEach(square => {
+            const pieceImg = square.querySelector('img.piece');
+            if (pieceImg) {
+                let piece = pieceImg.src.split('/').pop().replace('.svg', '');
+                if (piece.endsWith('x')) {
+                    piece = piece.slice(0, -1).toUpperCase();
+                }
+                rowData.push(piece);
             } else {
-                document.getElementById('modeList').style.display = 'block';
-                const modeList = document.getElementById('modeBtns');
-                const button = document.getElementById(`start${type}`);
-                button.classList.add('active')
-                modeList.innerHTML = '';
-                data.modes.forEach(mode => {
-                    const modeButton = document.createElement('button');
-                    modeButton.textContent = mode;
-                    modeButton.className = 'modeBtn';
-                    modeButton.addEventListener('click', () => startGame('Offline', mode));
-                    modeList.appendChild(modeButton);
-                });
+                rowData.push('');
             }
         });
-    }*/
-}
+        boardData.push(rowData);
+    });
 
-function startGame(type, mode) {
-    animateMainMenu('close');
-    console.log(type, mode)
-    setTimeout(() => {
-        document.getElementById('modeList').style.display = 'none';
-        document.getElementById('mainmenu').style.display = 'none';
-        document.getElementById(`start${type}`).classList.remove('active');
-        if (type === 'Offline') {
-            fetch('/startOffline', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    createPopUp('error', 'Błąd z połączeniem', data.error);
-                } else {
-                    document.getElementById('modeList').style.display = 'none';
-                    document.getElementById('chessGame').style.display = 'flex';
-                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-                    initChessBoard(data.board, data.timer);
-                    setInterval(refreshTimer, 500);
-                    //setInterval(checkForEvents, 500);
-                }
-            });
-        } else if (type === 'Bot') {
-            fetch('/startOffline', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                //body: JSON.stringify({ one_player: true, mode })
-                body: JSON.stringify({ one_player: true, game_mode: 'classic' })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    createPopUp('error', 'Błąd z połączeniem', data.error);
-                } else {
-                    document.getElementById('modeList').style.display = 'none';
-                    document.getElementById('chessGame').style.display = 'flex';
-                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-                    initChessBoard(data.board, data.timer);
-                    setInterval(refreshTimer, 500);
-                    //setInterval(checkForEvents, 500);
-                }
-            });
-        }
-    }, 1500);
+    return boardData;
 }
 
 function unsetIntervals() {
@@ -110,6 +42,8 @@ function unsetIntervals() {
 
 function renderSetup(game_type) {
     let boardData;
+    editMode = true;
+    document.getElementById('chessBoardEditor').style.display = 'block';
     if (game_type === 'human') {
         document.getElementById('chessStats').style.display = 'none';
         document.getElementById('chessSocial').style.display = 'none';
@@ -200,6 +134,12 @@ function renderSetup(game_type) {
                 }, 1500);
 
                 document.getElementById('chessGameStartButton').onclick = function() {
+                    if (boardAltered) {
+                        setupOptions['custom_board'] = getCustomBoardData();
+                    } else {
+                        setupOptions['custom_board'] = null;
+                    }
+                    setupOptions['allow_for_revert'] = document.getElementById('allowUndo').checked;
                     if (setupOptions['game_mode'] === undefined) {
                         createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
                     } else {
@@ -210,9 +150,12 @@ function renderSetup(game_type) {
                         })
                         .then(res => res.json())
                         .then(data => {
+                            editMode = false;
+                            document.getElementById('chessBoardEditor').style.display = 'none';
                             if (data.error) {
                                 createPopUp('error', 'Błąd z połączeniem', data.error);
                             } else {
+                                
                                 document.getElementById('chessSetupHuman').animate([
                                     { transform: 'translateY(0)' },
                                     { transform: 'translateY(-100%)' }
@@ -307,6 +250,11 @@ function renderSetup(game_type) {
                 }, 1500);
 
                 document.getElementById('chessGameStartButtonBot').onclick = function() {
+                    if (boardAltered) {
+                        setupOptions['custom_board'] = getCustomBoardData();
+                    } else {
+                        setupOptions['custom_board'] = null;
+                    }
                     setupOptions['game_mode'] = 'classic'; // Default mode for bot
                     setupOptions['one_player'] = true; // TODO
                     fetch('/startOffline', {
@@ -319,6 +267,8 @@ function renderSetup(game_type) {
                         if (data.error) {
                             createPopUp('error', 'Błąd z połączeniem', data.error);
                         } else {
+                            editMode = false;
+                            document.getElementById('chessBoardEditor').style.display = 'none';
                             document.getElementById('chessSetupBot').animate([
                                 { transform: 'translateY(0)' },
                                 { transform: 'translateY(-100%)' }
@@ -446,8 +396,121 @@ function updateChessBoard(boardData) {
       chessBoard.appendChild(row);
     }
 
+    const squares = document.querySelectorAll('.square');
+
+    squares.forEach(square => {
+        square.addEventListener('dragover', handleDragOver);
+        square.addEventListener('drop', handleDrop);
+        square.addEventListener('dragstart', handleDragStart);
+    });
+    document.querySelectorAll('#piecePalette img').forEach(piece => {
+        piece.addEventListener('dragstart', handlePaletteDragStart);
+    });
+
+    document.addEventListener('dragend', handleDragEnd);
+
     boardInitialized = true;
-  }
+    boardAltered = false;
+}
+let movedPiece = null;
+let fromPalette = false;
+let originalSquare = null;
+
+function handleDragOver(event) {
+    if (!editMode) return; // Check if in edit mode
+    let warningSetup = document.getElementsByClassName('warningSetup');
+    for (const el of warningSetup) {
+        el.style.display = 'block';
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(event) {
+    if (!editMode) return; // Check if in edit mode
+    event.preventDefault();
+    const piece = event.dataTransfer.getData('text/plain');
+    const targetSquare = event.target.closest('.square');
+
+    if (targetSquare) {
+        const existingPiece = targetSquare.querySelector('img.piece');
+        if (existingPiece) {
+            existingPiece.remove();
+        }
+
+        const newPieceImg = document.createElement('img');
+        newPieceImg.className = 'piece';
+        const pieceName = piece.split('/').pop().replace('.svg', '').replace('x', '');
+        newPieceImg.src = pieceName === pieceName.toUpperCase() 
+            ? `/static/figures/${pieceName}x.svg` 
+            : `/static/figures/${pieceName}.svg`;
+        newPieceImg.dataset.piece = piece;
+
+        targetSquare.appendChild(newPieceImg);
+
+        boardAltered = true;
+
+        // Remove the piece from the original square if it exists
+        if (originalSquare && originalSquare !== targetSquare) {
+            const originalPiece = originalSquare.querySelector('img.piece');
+            if (originalPiece) {
+                originalPiece.remove();
+            }
+        }
+    } else if (movedPiece && !fromPalette) {
+        // If dropped outside the board and not from the palette, remove the piece
+        movedPiece.remove();
+    }
+
+    // If moving from chessBoard or square instance, remove old instance
+    if (originalSquare && originalSquare !== targetSquare) {
+        const oldPiece = originalSquare.querySelector('img.piece');
+        if (oldPiece) {
+            oldPiece.remove();
+        }
+        originalSquare = null; // Reset original square only after removing the old piece
+    }
+}
+
+function handleDragStart(event) {
+    if (!editMode) return; // Check if in edit mode
+    const piece = event.target.dataset.piece;
+    if (piece) {
+        event.dataTransfer.setData('text/plain', piece);
+        event.dataTransfer.effectAllowed = 'move';
+        movedPiece = event.target;
+        fromPalette = false; // Reset flag
+        originalSquare = event.target.closest('.square'); // Track the original square
+    }
+}
+
+function handlePaletteDragStart(event) {
+    if (!editMode) return; // Check if in edit mode
+    const piece = event.target.dataset.piece;
+    if (piece) {
+        event.dataTransfer.setData('text/plain', piece);
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setDragImage(event.target, 0, 0);
+        fromPalette = true; // Mark as from palette
+        originalSquare = null; // Reset original square
+    }
+}
+
+function handleDragEnd(event) {
+    if (!editMode) return; // Check if in edit mode
+    const targetElement = document.elementFromPoint(event.clientX, event.clientY);
+    const targetSquare = targetElement?.closest('.square');
+
+    if (!targetSquare && movedPiece) {
+        if (fromPalette) {
+            // If from palette, do nothing (allow adding multiple pieces)
+        } else {
+            // If not from palette, remove the piece
+            movedPiece.remove();
+        }
+        movedPiece = null;
+    }
+}
 
 function createSquare(row, col, piece, letters) {
     const square = document.createElement('div');
@@ -491,6 +554,7 @@ function updateTimers(time) {
 }
 
 function handleSquareClick(posx, posy) {
+    if (editMode) return;
     fetch('/goodMoves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -578,15 +642,39 @@ function refreshTimer() {
             switch(event) {
                 case 'resign':
                     handleGameEnd('Koniec gry', 'Gracz się poddał!');
+                    localStorage.getItem('played').then(played => {
+                        if (played) {
+                            const playedCount = parseInt(played) + 1;
+                            localStorage.setItem('played', playedCount.toString());
+                        }
+                    });
                     break;
                 case 'draw':
                     handleGameEnd('Koniec gry', 'Remis!');
+                    localStorage.getItem('played').then(played => {
+                        if (played) {
+                            const playedCount = parseInt(played) + 1;
+                            localStorage.setItem('played', playedCount.toString());
+                        }
+                    });
                     break;
                 case 'time_over':
                     handleGameEnd('Koniec gry', 'Czas się skończył!');
+                    localStorage.getItem('played').then(played => {
+                        if (played) {
+                            const playedCount = parseInt(played) + 1;
+                            localStorage.setItem('played', playedCount.toString());
+                        }
+                    });
                     break;
                 case 'end':
                     handleGameEnd('Koniec gry', 'Gra została zakończona!');
+                    localStorage.getItem('played').then(played => {
+                        if (played) {
+                            const playedCount = parseInt(played) + 1;
+                            localStorage.setItem('played', playedCount.toString());
+                        }
+                    });
                     break;
                 case 'check':
                     createPopUp('info', 'Szach!', 'Twój król jest atakowany!');
@@ -652,8 +740,6 @@ function closePopUp(button) {
 
 function initStats(game_mode, game_type, first_player_name, second_player_name) {
     document.getElementById('chessGameType').innerHTML = `Gra ${game_mode}, typ: ${game_type}`;
-    document.getElementById('chessName1').textContent = first_player_name;
-    document.getElementById('chessName2').textContent = second_player_name;
 }
 
 function resign() {
@@ -809,7 +895,6 @@ slider.addEventListener('mousedown', startDragging, false);
 slider.addEventListener('mouseup', stopDragging, false);
 slider.addEventListener('mouseleave', stopDragging, false);
 
-fetchProfile();
 
 window.onload = function(){
     document.getElementById('loading').style.opacity = '0';
@@ -817,6 +902,7 @@ window.onload = function(){
     setTimeout(() => {
         playSoundtrack();
         document.getElementById('loading').style.display = 'none';
+        loadProfiles();
     }, 2000);
 };
 
@@ -958,6 +1044,74 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.body.classList.add('dark');
 }
 
+let current_player = 1;
+
+function prevPfp(elem) {
+    elem.parentNode.querySelector('.prpr').src = pfpsrclist[current_player - 1];
+}
+
+function nextPfp(elem) {
+    elem.parentNode.querySelector('.prpr').src = pfpsrclist[current_player];
+    current_player++;
+    if (current_player >= pfpsrclist.length) {
+        current_player = 0;
+    }
+}
+
+function saveProfiles() {
+    const player1Pfp = document.getElementById('myPfp1').src;
+    const player2Pfp = document.getElementById('myPfp2').src;
+    const player1Name = document.getElementById('profileEditNameInput1').value || 'Patyna';
+    const player2Name = document.getElementById('profileEditNameInput2').value || 'MinerPL';
+
+    // Save to localStorage
+    localStorage.setItem('player1Pfp', player1Pfp);
+    localStorage.setItem('player2Pfp', player2Pfp);
+    localStorage.setItem('player1Name', player1Name);
+    localStorage.setItem('player2Name', player2Name);
+
+    // Show confirmation
+    createPopUp('info', 'Zapisano', 'Profile zostały zapisane!');
+    loadProfiles();
+    document.getElementById('init').style.display = 'none';
+}
+
+let currentPlayer = 1;
+
+
+function loadProfiles() {
+    // Get profile data from localStorage
+    const player1Pfp = localStorage.getItem('player1Pfp');
+    const player2Pfp = localStorage.getItem('player2Pfp');
+    const player1Name = localStorage.getItem('player1Name');
+    const player2Name = localStorage.getItem('player2Name');
+    const played = localStorage.getItem('played') || 0;
+
+    if (played === null) {
+        localStorage.setItem('played', 0);
+    }
+
+    // Set profile pictures if they exist
+    if (player1Pfp) document.getElementById('myPfp1').src = player1Pfp;
+    else document.getElementById('myPfp1').src = pfpsrclist[0];
+
+    if (player2Pfp) document.getElementById('myPfp2').src = player2Pfp;
+    else document.getElementById('myPfp2').src = pfpsrclist[1];
+
+    // Set names if they exist
+    if (player1Name) document.getElementById('profileEditNameInput1').value = player1Name;
+    if (player2Name) document.getElementById('profileEditNameInput2').value = player2Name;
+
+    document.getElementById('chessName1').textContent = player1Name;
+    document.getElementById('chessName2').textContent = player2Name;
+    document.getElementById('chessPfp1').firstChild.src = player1Pfp;
+    document.getElementById('chessPfp2').firstChild.src = player2Pfp;
+    document.getElementById('profileName').textContent = player1Name;
+    document.getElementById('profilePfp').firstChild.src = player1Pfp;
+    document.getElementById('profileRank').textContent = 'Zagranych partii: ' + played || 0;
+
+}
+
 document.getElementById('musicvol').addEventListener('input', (e) => {
     const volume = e.target.value / 100;
     audio.volume = volume;
@@ -983,6 +1137,10 @@ document.getElementById('darkmode').addEventListener('change', (e) => {
 });
 
 window.addEventListener('load', () => {
+    const Name1 = localStorage.getItem('player1Name');
+    if (Name1 === null || Name1.length === 0) {
+        document.getElementById('init').style.display = 'block';
+    }
     const musicVolume = localStorage.getItem('musicVolume');
     if (musicVolume !== null) {
         audio.volume = parseFloat(musicVolume);

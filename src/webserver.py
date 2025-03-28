@@ -47,6 +47,10 @@ def start_offline():
         mode_name = data.get('game_mode')
         one_player = data.get('one_player', False)
         human_color = data.get('human_color', "Biały")
+        custom_board = data.get('custom_board', None)
+        allow_for_revert = data.get('allow_for_revert', True)
+
+        print('Custom board:', custom_board)
 
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
@@ -58,6 +62,23 @@ def start_offline():
 
         modes_store[session_id] = mode_instance
         mode_instance.game_mode = mode_name
+
+        if allow_for_revert:
+            mode_instance.allow_for_revert = allow_for_revert
+        
+        if custom_board:
+            try:
+                # Normalize the board data before setting it
+                for i in range(len(custom_board)):
+                    for j in range(len(custom_board[i])):
+                        # Convert empty strings to spaces
+                        if custom_board[i][j] == '':
+                            custom_board[i][j] = ' '
+                mode_instance.set_board(custom_board)
+            except ValueError as e:
+                return jsonify({'error': str(e)}), 400
+        else:
+            mode_instance.board = mode_instance.initialize_board()
 
         return jsonify({
             'board': mode_instance.board,
@@ -230,24 +251,6 @@ def revert():
         return jsonify({'error': str(e)}), 500
     
 
-@app.route('/customBoardLayout', methods=['POST'])
-def custom_board_layout():
-    try:
-        session_id = session.get('session_id')
-        if not session_id or session_id not in modes_store:
-            return jsonify({'error': 'Game session not found'}), 400
-
-        board_layout = request.json.get('board')
-        if not board_layout or len(board_layout) != 8:
-            return jsonify({'error': 'Invalid board layout'}), 400
-
-        mode_instance = modes_store[session_id]
-        mode_instance.board = board_layout
-        return jsonify({'board': board_layout})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/draw', methods=['POST'])
 def draw():
     try:
@@ -294,6 +297,25 @@ def get_board_look():
         return jsonify({'error': str(e)}), 500
 
 
+
+@app.route('/customBoardLayout', methods=['POST'])
+def custom_board_layout():
+    try:
+        session_id = session.get('session_id')
+        if not session_id or session_id not in modes_store:
+            return jsonify({'error': 'Game session not found'}), 400
+
+        board_layout = request.json.get('board')
+        if not board_layout or len(board_layout) != 8:
+            return jsonify({'error': 'Invalid board layout'}), 400
+        print('dupa')
+        mode_instance = modes_store[session_id]
+        mode_instance.board = board_layout
+        return jsonify({'board': board_layout})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/getPGN', methods=['GET'])
 def get_pgn():
     try:
@@ -330,6 +352,14 @@ def get_master_database():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/promote', methods=['POST'])
+def handle_promotion():
+    session_id = session.get('session_id')
+    piece = request.json.get('piece')
+    mode = modes_store[session_id]
+    mode.promotion_choice = piece
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
