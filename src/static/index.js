@@ -393,7 +393,7 @@ function updateChessBoard(boardData) {
 
   function initChessBoard(boardData) {
     document.getElementById('chessGame').style.display = 'flex';
-    const chessBoard = document.getElementById('chessBoard');
+    const chessBoard = document.getElementById('chessBoardContainer');
     const letters = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
 
     chessBoard.innerHTML = '';
@@ -526,7 +526,7 @@ function executeMove(posx, posy, newPosx, newPosy) {
         console.log('blocked double move');
         return
     };
-    const chessBoard = document.getElementById('chessBoard');
+    const chessBoard = document.getElementById('chessBoardContainer');
     chessBoard.style.pointerEvents = 'none'; // Disable input
     performing_move = true;
     fetch('/move', {
@@ -852,6 +852,30 @@ function animateChessBoard(type) {
         document.getElementById('chessStats').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
     }
 }
+
+function back() {
+    // revert move on server
+    fetch('/revert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            createPopUp('error', 'Błąd z połączeniem', data.error);
+        } else {
+            return 'OK';
+        }
+    }
+    );
+}
+
+let promotionButtons = `<div id="chessPromotion">
+                        <button id="chessPromotionQueen" onclick="promote('queen')"><img src="/static/figures/q.svg"></button>
+                        <button id="chessPromotionRook" onclick="promote('rook')"><img src="/static/figures/r.svg"></button>
+                        <button id="chessPromotionBishop" onclick="promote('bishop')"><img src="/static/figures/b.svg"></button>
+                        <button id="chessPromotionKnight" onclick="promote('knight')"><img src="/static/figures/n.svg"></button>
+                        </div>`
 
 const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
 let currentSongIndex = Math.floor(Math.random() * songs.length);

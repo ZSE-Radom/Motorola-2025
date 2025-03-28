@@ -8,7 +8,7 @@ from master_database import MasterDatabase
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
-app.secret_key = os.urandom(12).hex()
+app.secret_key = os.urandom(12).hex()   
 
 # Store game modes and sessions
 modes_store = {}
@@ -206,6 +206,44 @@ def resign():
             'running': mode_instance.running,
             'winner': mode_instance.winner
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/revert', methods=['POST'])
+def revert():
+    try:
+        session_id = session.get('session_id')
+        if not session_id or session_id not in modes_store:
+            return jsonify({'error': 'Game session not found'}), 400
+
+        mode_instance = modes_store[session_id]
+        mode_instance.revert()
+        return jsonify({
+            'board': mode_instance.board,
+            'timer': mode_instance.timer,
+            'current_turn': mode_instance.current_turn,
+            'running': mode_instance.running,
+            'winner': mode_instance.winner
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/customBoardLayout', methods=['POST'])
+def custom_board_layout():
+    try:
+        session_id = session.get('session_id')
+        if not session_id or session_id not in modes_store:
+            return jsonify({'error': 'Game session not found'}), 400
+
+        board_layout = request.json.get('board')
+        if not board_layout or len(board_layout) != 8:
+            return jsonify({'error': 'Invalid board layout'}), 400
+
+        mode_instance = modes_store[session_id]
+        mode_instance.board = board_layout
+        return jsonify({'board': board_layout})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

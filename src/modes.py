@@ -12,11 +12,12 @@ class Mode:
         self.name = name
         self.board = self.initialize_board()
         self.current_turn = "Biały"
-        self.timer = {"Biały": 600, "Czarny": 600}
+        self.timer = {"Biały": 6000, "Czarny": 6000}
         self.move_history = []
         self.running = True
         self.selected_piece = None
         self.valid_moves = []
+        self.checkflag = 0
         self.last_move = None
         self.winner = None
         self.game_type = "offline"  # offline and so
@@ -71,7 +72,7 @@ class Mode:
             return
 
         # Only allow moves if the piece belongs to the current turn
-        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
             return
 
         if self.one_player and self.current_turn == self.bot_color:
@@ -145,12 +146,35 @@ class Mode:
                     if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
                         self.valid_moves.append((x, y-2))
 
-        self.check_for_check()
-
         return self.valid_moves
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
+    
+    def notation_to_coord(self, notation):
+        col = ord(notation[0]) - ord('a')
+        row = 8 - int(notation[1])
+        return row, col
+    
+    def revert(self):
+        if len(self.move_history) < 1:
+            return
+
+        move1 = self.move_history.pop()
+        move2 = self.move_history.pop()
+
+        # Extract starting and ending positions
+        start1, end1 = move1[1:3], move1[3:5]  # Example: "Pe7e5" → start="e7", end="e5"
+        start2, end2 = move2[1:3], move2[3:5]
+
+        # Convert notation to board coordinates if needed
+        start1 = self.notation_to_coord(start1)
+        end1 = self.notation_to_coord(end1)
+        start2 = self.notation_to_coord(start2)
+        end2 = self.notation_to_coord(end2)
+
+        self.move_piece(start2, end2, bypass_validity=True)
+        self.move_piece(start1, end1, bypass_validity=True)
 
     def check_checkmate(self):
         if not self.check_for_check():
@@ -177,10 +201,12 @@ class Mode:
                         self.board[move[0]][move[1]] = backup_to
 
                         if not still_in_check:
+                            self.show_check_warning()
                             return False
         return True
 
     def check_for_check(self):
+
         king_symbol = 'K' if self.current_turn == "Biały" else 'k'
         king_position = None
         for i in range(8):
@@ -198,6 +224,7 @@ class Mode:
         opponent_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
         is_checked = False
 
+        self.checkflag = 1
         for i in range(8):
             for j in range(8):
                 piece = self.board[i][j]
@@ -208,9 +235,8 @@ class Mode:
                         break
             if is_checked:
                 break
+        self.checkflag = 0
 
-        if is_checked:
-            self.show_check_warning()
         return is_checked
 
     def show_check_warning(self):
@@ -325,6 +351,13 @@ class Mode:
             if piece.lower() == 'p' and (ex == 0 or ex == 7):
                 self.board[ex][ey] = self.prompt_promotion()
 
+        # If player move sabotage checkmate, return
+        if self.check_for_check():
+            self.board[ex][ey] = " "
+            self.board[sx][sy] = piece
+            self.show_check_warning()
+            return
+
         # Update move history with classic long notation
         move_notation = self.get_move_notation(piece, start, end)
         self.move_history.append(move_notation)
@@ -332,12 +365,15 @@ class Mode:
 
         self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
 
+
+
         if self.check_checkmate():
             self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
             add_event(self.session_id, 'end')
             self.running = False
 
-        self.check_for_check()
+        # If player move sabotage checkmate, return
+
         self.check_winner()
 
         if self.one_player and self.current_turn == self.bot_color and self.running and not self.bot_has_moved:
