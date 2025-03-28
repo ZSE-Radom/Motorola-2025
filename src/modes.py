@@ -120,7 +120,7 @@ class Mode:
                     self.valid_moves.append(en_passant_target)
 
         # Handle other pieces (rook, bishop, queen, knight, king)
-        elif piece.lower() in ['r', 'b', 'q', 'n', 'k']:
+        elif piece.lower() in ['r', 'b', 'q']:
             for direction in self.directions.get(piece.lower(), []):
                 dx, dy = direction
                 nx, ny = x + dx, y + dy
