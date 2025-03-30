@@ -6,7 +6,7 @@ from utils import get_events
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
-app.secret_key = os.urandom(12).hex()   
+app.secret_key = os.urandom(12).hex()
 
 # Store game modes and sessions
 modes_store = {}
@@ -57,7 +57,7 @@ def start_offline():
 
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
-        
+
         if mode_name == 'gm':
             mode_instance = available_modes[mode_name](name=gm_name, one_player=one_player, human_color=human_color)
         else:
@@ -71,7 +71,7 @@ def start_offline():
 
         if allow_for_revert:
             mode_instance.allow_for_revert = allow_for_revert
-        
+
         if custom_board:
             try:
                 # Normalize the board data before setting it
@@ -261,7 +261,7 @@ def revert():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/draw', methods=['POST'])
 def draw():
@@ -343,8 +343,12 @@ def list_pgns():
 def handle_promotion():
     session_id = session.get('session_id')
     piece = request.json.get('piece')
+
     mode = modes_store[session_id]
-    mode.promotion_choice = piece
+    res = mode.promotion(piece)
+    if res is None:
+        return jsonify({'error': 'Invalid promotion'}), 400
+
     return jsonify({'status': 'ok'})
 
 online_games = {}

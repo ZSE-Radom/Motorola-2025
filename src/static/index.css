@@ -811,7 +811,7 @@ input:checked + .slider:before {
 }
 
 #chessPromotion {
-    display: flex;
+    display: none;
     background-color: #D2AB99;
     border-radius: 1rem;
 }

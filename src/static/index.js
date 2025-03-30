@@ -8,6 +8,7 @@ let boardAltered = false;
 let editMode = false;
 let pfpsrclist = ['/static/profiles/1.png', '/static/profiles/2.png', '/static/profiles/3.png', '/static/profiles/4.png', '/static/profiles/5.png', '/static/profiles/6.png', '/static/profiles/7.png', '/static/profiles/8.png', '/static/profiles/9.png', '/static/profiles/10.png', '/static/profiles/11.png', '/static/profiles/12.png', '/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
 let rInterval = null;
+let currentPlayer = null;
 
 function getCustomBoardData() {
     const boardData = [];
@@ -360,7 +361,6 @@ function renderSetup(game_type) {
                                 easing: 'ease-in-out'
                             });
                             setTimeout(() => {
-                                console.log('ddd')
                                 document.getElementById('chessSetupBot').style.display = 'none';
                                 document.getElementById('chessGame').style.display = 'flex';
                                 document.getElementById('chessSocial').style.display = 'block';
@@ -784,6 +784,8 @@ function refreshTimer() {
             animateChessBoard('game');
           }
 
+            currentPlayer = data.current_turn;
+
           if (!data.events) {
             return;
             }
@@ -943,9 +945,29 @@ function handleGameEnd(title, message) {
 }
 
 function handlePromotion() {
-    // TODO: Implement promotion piece selection UI
-    // For now, automatically promote to Queen
-    createPopUp('info', 'Promocja', 'Pionek został promowany do Hetmana');
+    document.getElementById('chessPromotionQueen').children.item(0).src = `/static/figures/q${currentPlayer === "Biały" ? 'x' : ''}.svg`;
+    document.getElementById('chessPromotionRook').children.item(0).src = `/static/figures/r${currentPlayer === "Biały" ? 'x' : ''}.svg`;
+    document.getElementById('chessPromotionBishop').children.item(0).src = `/static/figures/b${currentPlayer === "Biały" ? 'x' : ''}.svg`;
+    document.getElementById('chessPromotionKnight').children.item(0).src = `/static/figures/n${currentPlayer === "Biały" ? 'x' : ''}.svg`;
+
+    document.getElementById("chessPromotion").style.display = "flex";
+}
+
+function promotion(piece) {
+    document.getElementById("chessPromotion").style.display = "none";
+    fetch('/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            piece: piece,
+        })
+    }).then(data => {
+        if (data.status !== 200) {
+            createPopUp('error', 'Wystąpił błąd podczas promocji', data.error);
+            return;
+        }
+        createPopUp('info', 'Promocja', 'Pionek został promowany!');
+    })
 }
 
 const slider = document.querySelector('#feed');
@@ -1035,12 +1057,6 @@ function back() {
     );
 }
 
-let promotionButtons = `<div id="chessPromotion">
-                        <button id="chessPromotionQueen" onclick="promote('queen')"><img src="/static/figures/q.svg"></button>
-                        <button id="chessPromotionRook" onclick="promote('rook')"><img src="/static/figures/r.svg"></button>
-                        <button id="chessPromotionBishop" onclick="promote('bishop')"><img src="/static/figures/b.svg"></button>
-                        <button id="chessPromotionKnight" onclick="promote('knight')"><img src="/static/figures/n.svg"></button>
-                        </div>`
 
 const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
 let currentSongIndex = Math.floor(Math.random() * songs.length);
