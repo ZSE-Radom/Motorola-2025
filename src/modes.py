@@ -2,9 +2,12 @@ import time
 import threading
 import random
 import os
+from tabnanny import check
+
 from utils import add_event
 from bot import ChessBot
 from pgn import PGNProcessor
+import copy
 
 class Mode:
     def __init__(self, name, one_player=False, human_color="Biały"):
@@ -94,7 +97,7 @@ class Mode:
 
         # Only allow moves if the piece belongs to the current turn
         # Fix the inverted logic - this was causing valid_moves to always be empty
-        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
             return  # This piece doesn't belong to the current player
 
         if self.one_player and self.current_turn == self.bot_color:
@@ -353,6 +356,7 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
+        board_copy = copy.deepcopy(self.board)
         print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
@@ -414,8 +418,7 @@ class Mode:
 
         # If player move sabotage checkmate, return
         if self.check_for_check():
-            self.board[ex][ey] = " "
-            self.board[sx][sy] = piece
+            self.board = board_copy
             self.show_check_warning()
             return
 
