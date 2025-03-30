@@ -204,7 +204,7 @@ def good_moves():
             return jsonify({'error': 'Invalid position data'}), 400
 
         mode_instance = modes_store[session_id]
-        valid_moves = mode_instance.highlight_moves(posx, posy, None)
+        valid_moves = mode_instance.highlight_moves(posx, posy, 0, None)
 
         return jsonify({'valid_moves': valid_moves})
     except Exception as e:
