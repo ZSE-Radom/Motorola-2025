@@ -50,6 +50,7 @@ function renderSetup(game_type) {
         document.getElementById('chessSocial').style.display = 'none';
         document.getElementById('chessSetupHuman').style.display = 'none';
         document.getElementById('chessSetupBot').style.display = 'none';
+        document.getElementById('chessSetupGM').style.display = 'none';
         document.getElementById('chessBoard').style.display = 'none';
         animateMainMenu('close');
         fetch('/getBoardLook', {
@@ -173,6 +174,7 @@ function renderSetup(game_type) {
                                 });
                                 setTimeout(() => {
                                     document.getElementById('chessSetupHuman').style.display = 'none';
+                                    document.getElementById('chessSetupGM').style.display = 'none';
                                     document.getElementById('chessSetupBot').style.display = 'none';
                                     document.getElementById('chessGame').style.display = 'flex';
                                     document.getElementById('chessSocial').style.display = 'block';
@@ -193,6 +195,7 @@ function renderSetup(game_type) {
         document.getElementById('chessSocial').style.display = 'none';
         document.getElementById('chessSetupHuman').style.display = 'none';
         document.getElementById('chessSetupBot').style.display = 'none';
+        document.getElementById('chessSetupGM').style.display = 'none';
         document.getElementById('chessBoard').style.display = 'none';
         animateMainMenu('close');
         fetch('/getBoardLook', {
@@ -287,6 +290,112 @@ function renderSetup(game_type) {
                             setTimeout(() => {
                                 console.log('ddd')
                                 document.getElementById('chessSetupBot').style.display = 'none';
+                                document.getElementById('chessGame').style.display = 'flex';
+                                document.getElementById('chessSocial').style.display = 'block';
+                                document.getElementById('chessStats').style.display = 'block';
+                                initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                                initChessBoard(data.board, data.timer);
+                                rInterval = setInterval(refreshTimer, 500);
+                                //setInterval(checkForEvents, 500);
+                            }, 1000);
+                        }
+                    });
+                }
+            }
+        });
+    } else if (game_type === 'gm') {
+        editMode = false;
+        document.getElementById('chessBoardEditor').style.display = 'none';
+        document.getElementById('chessStats').style.display = 'none';
+        document.getElementById('chessSocial').style.display = 'none';
+        document.getElementById('chessSetupHuman').style.display = 'none';
+        document.getElementById('chessSetupBot').style.display = 'none';
+        document.getElementById('chessSetupGM').style.display = 'none';
+        document.getElementById('chessBoard').style.display = 'none';
+
+        animateMainMenu('close');
+        fetch('/getBoardLook', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                createPopUp('error', 'Błąd z połączeniem', data.error);
+            } else {
+                boardData = data.board;
+                initChessBoard(boardData, 0);
+
+                pgns_list = document.getElementById('chessSetupField10Content');
+
+                fetch('/listPGNs', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }).then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        createPopUp('error', 'Błąd z połączeniem', data.error);
+                    } else {
+                        pgns_list.innerHTML = '';
+                        for (const pgn of data.pgns) {
+                            const pgnButton = document.createElement('button');
+                            pgnButton.textContent = pgn;
+                            pgnButton.className = 'modeBtn';
+                            pgnButton.classList.add('pgnBtn');
+                            pgns_list.appendChild(pgnButton);
+                            pgnButton.onclick = function() {
+                                setupOptions['pgn'] = pgn;
+                                pgnButton.classList.add('active');
+                                for (const child of pgnButton.parentNode.children) {
+                                    if (child !== pgnButton) {
+                                        child.classList.remove('active');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                setTimeout(() => {
+                    document.getElementById('mainmenu').style.display = 'none';
+                    document.getElementById('chessGame').style.display = 'flex';
+                    document.getElementById('chessSetupGM').style.display = 'block';
+                    document.getElementById('chessBoard').style.display = 'flex';
+                    animateChessBoard('setupGM');
+                }, 1500);
+
+                document.getElementById('chessGameStartButtonGM').onclick = function() {
+
+                setupOptions['gm_name'] = document.querySelector('.pgnBtn.active')?.textContent || null;
+                setupOptions['one_player'] = true; // TODO
+                    fetch('/startOffline', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(setupOptions)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            createPopUp('error', 'Błąd z połączeniem', data.error);
+                        } else {
+                            editMode = false;
+                            document.getElementById('chessBoardEditor').style.display = 'none';
+                            document.getElementById('chessSetupGM').animate([
+                                { transform: 'translateY(0)' },
+                                { transform: 'translateY(-100%)' }
+                            ], {
+                                duration: 1000,
+                                easing: 'ease-in-out'
+                            });
+                            document.getElementById('chessBoard').animate([
+                                { transform: 'translateX(0)' },
+                                { transform: 'translateX(-25%)' }
+                            ], {
+                                duration: 1000,
+                                easing: 'ease-in-out'
+                            });
+                            setTimeout(() => {
+                                console.log('ddd')
+                                document.getElementById('chessSetupGM').style.display = 'none';
                                 document.getElementById('chessGame').style.display = 'flex';
                                 document.getElementById('chessSocial').style.display = 'block';
                                 document.getElementById('chessStats').style.display = 'block';
@@ -894,11 +1003,11 @@ slider.addEventListener('mouseleave', stopDragging, false);
 
 window.onload = function(){
     document.getElementById('loading').style.opacity = '0';
+    loadProfiles();
     animateMainMenu('open');
     setTimeout(() => {
         playSoundtrack();
         document.getElementById('loading').style.display = 'none';
-        loadProfiles();
     }, 2000);
 };
 

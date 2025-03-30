@@ -247,23 +247,57 @@ def order_moves(board, moves, current_turn, maximizing):
 
 
 class ChessBot:
-    def __init__(self, bot_color="Czarny", search_depth=4):
+    def __init__(self, bot_color="Czarny", search_depth=4, move_database=None):
         self.bot_color = bot_color
         self.search_depth = search_depth
+        self.move_database = move_database
+        self.current_line = []  # For tracking game line
+        self.next_moves = []    # For displaying possible continuations
+
+    def get_position_key(self, board, current_turn):
+        """Generate position key matching PGN processor's format"""
+        pieces = []
+        for row in board:
+            for piece in row:
+                pieces.append(piece if piece != ' ' else '1')
+        color = 'w' if current_turn == "Biały" else 'b'
+        return ''.join(pieces) + color
 
     def get_move(self, board, current_turn):
         if current_turn != self.bot_color:
             print("It's not my turn!")
             return None
         
+        # First try to use PGN database moves
+        if self.move_database:
+            position_key = self.get_position_key(board, current_turn)
+            
+            # Check if we're following a known game line
+            if self.current_line:
+                next_moves = [m for m in self.current_line if m[0] == position_key]
+                if next_moves:
+                    best_move = max(next_moves, key=lambda x: x[1])[2]
+                    self.current_line = [m for m in self.current_line if m[0] == position_key]
+                    self.next_moves = self.current_line[:5]
+                    return best_move
+
+            # Find new position in database
+            possible_moves = self.move_database.get(position_key, {})
+            if possible_moves:
+                best_move = max(possible_moves.items(), key=lambda x: x[1])[0]
+                self.current_line = list(possible_moves.keys())
+                self.next_moves = self.current_line[:5]
+                return best_move
+
+        # Fallback to standard bot logic
+        return self.get_standard_move(board, current_turn)
+    
+    def get_standard_move(self, board, current_turn):
         maximizing = (self.bot_color == "Biały")
         legal_moves = generate_all_legal_moves(board, current_turn)
+        
         if not legal_moves:
             return None
-        
-        # Add randomization to prevent repetitive moves
-        if random.random() < 0.1:  # 10% chance of random move
-            return random.choice(legal_moves)
         
         _, best_move = self.minimax(board, self.search_depth, -math.inf, math.inf, maximizing, current_turn)
         return best_move
@@ -327,3 +361,13 @@ if __name__ == "__main__":
     bot_move = bot.get_move(board, current_turn)
     if bot_move:
         board = make_move(board, bot_move)
+
+    def get_next_moves_suggestion(self):
+        """Return possible continuation moves for UI display"""
+        return [f"{self.coord_to_notation(start)}-{self.coord_to_notation(end)}" 
+                for (start, end) in self.next_moves[:3]]
+
+    def coord_to_notation(self, coord):
+        """Convert board coordinates to chess notation"""
+        row, col = coord
+        return chr(col + ord('a')) + str(8 - row)

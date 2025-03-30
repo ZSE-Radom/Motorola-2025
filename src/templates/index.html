@@ -39,6 +39,7 @@
             <div>
             <button id="startHuman" onclick="renderSetup('human')">Ze znajomym</button>
             <button id="startBot" onclick="renderSetup('bot')">Z botem</button>
+            <button id="startGM" onclick="renderSetup('gm')">Z arcymistrzem</button>
         </div>
         </div>
         <div id="modeList"><div style="display: flex;"><h1>Wybierz tryb gry</h1><h1 id="close" onclick="closeModes();">X</h1></div><div id="modeBtns"></div></div>
@@ -142,9 +143,29 @@
                             </div>
                         </div>
                     </div>
-                    <h2>Możesz też wybrać bota Arcymistrza</h2>
-                    <div id="chessSetupField2">
-                        <div id="chessSetupField2Content">
+                    <h2>Wybierz dodatkowe opcje</h2>
+                    <div class="option-list">
+                        <div class="option">
+                            <span>test</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="chessGameStart">
+                    <button id="chessGameStartButtonBot" class="modeBtn" onclick="startGame('Bot')">ZACZNIJ GRĘ!!!</button>
+                </div>
+            </div>
+        </div>
+        <div class="chessSetup" id="chessSetupGM">
+            <div id="chessSetupContainer">
+                <div id="chessSetupFields">
+                    <div class="warningSetup">Zmiana układu figur nie jest obsługiwana w grze z Arcymistrzem</div>
+                    <h2>Wybierz z kim zagrasz</h2>
+                    <div id="chessSetupField10">
+                        <div id="chessSetupField10Content">
                         </div>
                     </div>
                     <h2>Wybierz dodatkowe opcje</h2>
@@ -159,7 +180,7 @@
                     </div>
                 </div>
                 <div id="chessGameStart">
-                    <button id="chessGameStartButtonBot" class="modeBtn" onclick="startGame('Bot')">ZACZNIJ GRĘ!!!</button>
+                    <button id="chessGameStartButtonGM" class="modeBtn" onclick="startGame('GM')">ZACZNIJ GRĘ!!!</button>
                 </div>
             </div>
         </div>

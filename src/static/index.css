@@ -86,12 +86,8 @@ html, body {
     }
 }
 
-#startOffline {
-    background: linear-gradient(90deg, hsla(339, 100%, 55%, 1) 0%, hsla(197, 100%, 64%, 1) 100%);
-}
-
-#startOnline {
-    background: linear-gradient(90deg, hsla(31, 90%, 76%, 1) 0%, hsla(302, 82%, 76%, 1) 100%);
+#startGM {
+    background: linear-gradient(90deg, hsla(169, 100%, 49%, 1) 0%, hsla(77, 100%, 18%, 1) 100%);
 }
 
 #startBot {
@@ -717,6 +713,14 @@ input:checked + .slider:before {
     align-items: flex-end;
 }
 
+#chessGameStartButtonGM {
+    width: 85%;
+    margin: 1rem 7.5%;
+    border: none;
+    display: flex;
+    align-items: flex-end;
+}
+
 #settings {
     position: absolute;
     top: 20%;
@@ -859,6 +863,12 @@ input:checked + .slider:before {
     padding: 2rem;
     z-index: 1;
     display: none;
+}
+
+.pgnBtn {
+    width:fit-content;
+    font-size: 1rem;
+    padding: 0.7em;
 }
 
 body.dark {

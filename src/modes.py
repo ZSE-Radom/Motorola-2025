@@ -2,11 +2,9 @@ import time
 import threading
 import random
 import os
-import copy
 from utils import add_event
-from master_database import MasterDatabase
 from bot import ChessBot
-
+from pgn import PGNProcessor
 
 class Mode:
     def __init__(self, name, one_player=False, human_color="Biały"):
@@ -27,6 +25,7 @@ class Mode:
         self.second_player_name = "Dupa"
         self.session_id = ''
         self.allow_for_revert = False
+        self.gm_name = None
 
         self.one_player = one_player
         self.human_color = human_color
@@ -84,16 +83,10 @@ class Mode:
             print("Invalid board configuration")
             return
 
-        # Removed by Dawid
-        # Check this Mikołaj before reimplement
-        #         # Only allow moves if the piece belongs to the current turn
-        #         # Fix the inverted logic - this was causing valid_moves to always be empty
-        #         if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
-        #             return  # This piece doesn't belong to the current player
-
         # Only allow moves if the piece belongs to the current turn
-        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
-            return
+        # Fix the inverted logic - this was causing valid_moves to always be empty
+        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+            return  # This piece doesn't belong to the current player
 
         if self.one_player and self.current_turn == self.bot_color:
             return
@@ -127,7 +120,7 @@ class Mode:
                     self.valid_moves.append(en_passant_target)
 
         # Handle other pieces (rook, bishop, queen, knight, king)
-        elif piece.lower() in ['r', 'b', 'q']:
+        elif piece.lower() in ['r', 'b', 'q', 'n', 'k']:
             for direction in self.directions.get(piece.lower(), []):
                 dx, dy = direction
                 nx, ny = x + dx, y + dy
@@ -143,45 +136,23 @@ class Mode:
                     nx += dx
                     ny += dy
 
-        elif piece.lower() == 'n':
-            for dx, dy in self.directions.get(piece.lower(), []):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
-                    self.valid_moves.append((nx, ny))
-
-        elif piece.lower() == 'k':
-            for dx, dy in self.directions.get(piece.lower(), []):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < 8 and 0 <= ny < 8 and (self.board[nx][ny] == " " or self.board[nx][ny].islower() != piece.islower()):
-                    self.valid_moves.append((nx, ny))
-
-            # Castling moves (very simplified check – you might want to add proper check and path safety)
-            if self.castling_rights.get(self.current_turn):
-                rights = self.castling_rights[self.current_turn]
-                if rights.get("kingside"):
-                    # Kingside: check that squares between king and rook are empty
-                    if self.board[x][y+1] == " " and self.board[x][y+2] == " ":
-                        self.valid_moves.append((x, y+2))
-
-                if rights.get("queenside"):
-                    if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
-                        self.valid_moves.append((x, y-2))
+        print(self.valid_moves)
 
         return self.valid_moves
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
-
+    
     def notation_to_coord(self, notation):
         """Converts chess notation (e.g., 'e2') to board coordinates (row, col)."""
         col = ord(notation[0]) - ord('a')
         row = 8 - int(notation[1])
         return row, col
-
+    
     def revert(self):
         if not self.allow_for_revert:
             return
-
+        
         if len(self.move_history) < 1:
             return
 
@@ -209,7 +180,7 @@ class Mode:
         for i in range(8):
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
-                        self.current_turn == "Czarny" and self.board[i][j].islower()):
+                    self.current_turn == "Czarny" and self.board[i][j].islower()):
                     self.highlight_moves(i, j, None)
                     for move in self.valid_moves:
                         piece = self.board[i][j]
@@ -320,7 +291,6 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
-        board_copy = copy.deepcopy(self.board)
         print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
@@ -379,7 +349,8 @@ class Mode:
 
         # If player move sabotage checkmate, return
         if self.check_for_check():
-            self.board = board_copy
+            self.board[ex][ey] = " "
+            self.board[sx][sy] = piece
             self.show_check_warning()
             return
 
@@ -452,12 +423,21 @@ class Mode:
     def perform_bot_move(self):
         if self.bot_has_moved:
             return
+        
+        if self.gm_name:
+            pgn_file = './game_data/pgn_games/' + self.gm_name
+
+            if not os.path.exists(pgn_file):
+                pass
+            
+            # parse next move from pgn file, probably finding this that occured most times
 
         bot_move = self.bot.get_move(self.board, self.current_turn)
         if bot_move is None:
             self.resign()
             return
 
+        print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
         self.bot_has_moved = True
         add_event(self.session_id, 'bot_move_finish')
@@ -538,6 +518,7 @@ class GMMode(Mode):
         if move_suggestion:
             start = move_suggestion['from']
             end = move_suggestion['to']
+            print('perform bot move 472')
             self.move_piece(start, end)
             self.bot_has_moved = True
             add_event(self.session_id, {
@@ -570,11 +551,6 @@ class GMMode(Mode):
             "move_suggestions": current_stats,
             "database_stats": db_stats
         }
-
-    def import_pgn(self, file_path):
-        """Import a PGN file into the master database"""
-        return self.master_db.import_pgn(file_path)
-
 
 class X960Mode(Mode):
     def __init__(self, one_player=False, human_color="Biały"):
@@ -624,3 +600,20 @@ class X960Mode(Mode):
             ["P"] * 8,
             white
         ]
+
+class GMMode(Mode):
+    def __init__(self, name, one_player=True, human_color="Biały"):
+        super().__init__(name, one_player, human_color)
+        self.pgn_processor = PGNProcessor()
+        self.move_database = None
+        
+        if self.gm_name:
+            pgn_path = f'./game_data/pgn_games/{self.gm_name}'
+            if os.path.exists(pgn_path):
+                self.pgn_processor.parse_pgn(pgn_path)
+                self.move_database = self.pgn_processor.move_database
+        
+        # Initialize bot with move database
+        self.bot = ChessBot(bot_color=self.bot_color, 
+                          search_depth=2,
+                          move_database=self.move_database)

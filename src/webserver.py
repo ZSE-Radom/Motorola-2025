@@ -1,10 +1,8 @@
 from flask import Flask, render_template, jsonify, request, session
-from modes import ClassicMode, BlitzMode, X960Mode
+from modes import ClassicMode, BlitzMode, X960Mode, GMMode
 from flask_cors import CORS
 import os
 from utils import get_events
-from pgn_parser import PGNParser
-from master_database import MasterDatabase
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
@@ -15,7 +13,8 @@ modes_store = {}
 available_modes = {
     'classic': ClassicMode,
     'blitz': BlitzMode,
-    '960': X960Mode
+    '960': X960Mode,
+    'gm': GMMode
 }
 
 @app.route('/', methods=['GET'])
@@ -49,6 +48,7 @@ def start_offline():
         human_color = data.get('human_color', "Biały")
         custom_board = data.get('custom_board', None)
         allow_for_revert = data.get('allow_for_revert', True)
+        gm_name = data.get('gm_name', False)
 
         print('Custom board:', custom_board)
 
@@ -79,6 +79,9 @@ def start_offline():
                 return jsonify({'error': str(e)}), 400
         else:
             mode_instance.board = mode_instance.initialize_board()
+
+        if gm_name:
+            mode_instance.gm_name = gm_name
 
         return jsonify({
             'board': mode_instance.board,
@@ -316,39 +319,13 @@ def custom_board_layout():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/getPGN', methods=['GET'])
-def get_pgn():
+@app.route('/listPGNs', methods=['GET'])
+def list_pgns():
     try:
-        session_id = session.get('session_id')
-        if not session_id or session_id not in modes_store:
-            return jsonify({'error': 'Game session not found'}), 400
-
-        mode_instance = modes_store[session_id]
-        pgn = mode_instance.get_pgn()
-        return jsonify({'pgn': pgn})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/loadPGN', methods=['POST'])
-def load_pgn():
-    try:
-        pgn = request.json.get('pgn')
-        if not pgn:
-            return jsonify({'error': 'Invalid PGN data'}), 400
-
-        parser = PGNParser()
-        parser.parse_pgn(pgn)
-        return jsonify({'board': parser.board})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/getMasterDatabase', methods=['GET'])
-def get_master_database():
-    try:
-        master_db = MasterDatabase()
-        return jsonify({'master_db': master_db.database})
+        folder = './game_data/pgn_games'
+        pgn_files = [f for f in os.listdir(folder) if f.endswith('.pgn')]
+        pgn_files.sort(key=lambda x: os.path.getmtime(os.path.join(folder, x)), reverse=True)
+        return jsonify({'pgns': pgn_files})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
