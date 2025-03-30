@@ -2,9 +2,12 @@ import time
 import threading
 import random
 import os
+from tabnanny import check
+
 from utils import add_event
 from bot import ChessBot
 from pgn import PGNProcessor
+import copy
 
 class Mode:
     def __init__(self, name, one_player=False, human_color="Biały"):
@@ -26,6 +29,7 @@ class Mode:
         self.session_id = ''
         self.allow_for_revert = False
         self.gm_name = None
+        self.bot_mode = 'easy'
 
         self.promotion_lock = False
         self.piece_to_promote = None
@@ -35,7 +39,12 @@ class Mode:
         self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
         self.bot_has_moved = False
         if one_player:
-            self.bot = ChessBot(bot_color=self.bot_color, search_depth=2)
+            if self.bot_mode == 'hard':
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=4)
+            elif self.bot_mode == 'medium':
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
+            else:
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=2)
 
         self.castling_rights = {
             "Biały": {"kingside": True, "queenside": True},
@@ -75,7 +84,7 @@ class Mode:
             raise ValueError("Invalid board dimensions. The board must be 8x8.")
         self.board = custom_board
 
-    def highlight_moves(self, x, y, buttons):
+    def highlight_moves(self, x, y, checkflag, buttons):
         piece = self.board[x][y]
 
         if piece == " ":
@@ -88,7 +97,7 @@ class Mode:
 
         # Only allow moves if the piece belongs to the current turn
         # Fix the inverted logic - this was causing valid_moves to always be empty
-        if (self.current_turn == "Biały" and piece.islower()) or (self.current_turn == "Czarny" and piece.isupper()):
+        if (self.current_turn == "Biały" and piece.islower() and checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and checkflag == 0):
             return  # This piece doesn't belong to the current player
 
         if self.one_player and self.current_turn == self.bot_color:
@@ -206,7 +215,7 @@ class Mode:
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
                     self.current_turn == "Czarny" and self.board[i][j].islower()):
-                    self.highlight_moves(i, j, None)
+                    self.highlight_moves(i, j, 0, None)
                     for move in self.valid_moves:
                         piece = self.board[i][j]
                         # Save state
@@ -245,18 +254,16 @@ class Mode:
         opponent_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
         is_checked = False
 
-        self.checkflag = 1
         for i in range(8):
             for j in range(8):
                 piece = self.board[i][j]
                 if (opponent_turn == "Biały" and piece.isupper()) or (opponent_turn == "Czarny" and piece.islower()):
-                    self.highlight_moves(i, j, None)
+                    self.highlight_moves(i, j, 1, None)
                     if (x, y) in self.valid_moves:
                         is_checked = True
                         break
             if is_checked:
                 break
-        self.checkflag = 0
 
         return is_checked
 
@@ -349,6 +356,8 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
+        board_copy = copy.deepcopy(self.board)
+        print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
             print("Invalid move!")
@@ -409,8 +418,7 @@ class Mode:
 
         # If player move sabotage checkmate, return
         if self.check_for_check():
-            self.board[ex][ey] = " "
-            self.board[sx][sy] = piece
+            self.board = board_copy
             self.show_check_warning()
             return
 
