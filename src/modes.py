@@ -163,8 +163,6 @@ class Mode:
                     if self.board[x][y-1] == " " and self.board[x][y-2] == " " and self.board[x][y-3] == " ":
                         self.valid_moves.append((x, y-2))
 
-        print(self.valid_moves)
-
         return self.valid_moves
 
     def initialize_board(self):
@@ -267,6 +265,10 @@ class Mode:
         add_event(self.session_id, 'check')
 
     def prompt_promotion(self):
+        if self.one_player and self.current_turn == self.bot_color:
+            print(self.current_turn, self.bot_color)
+            self.promotion("Q")
+            return
         add_event(self.session_id, 'promotion')
 
 
@@ -347,7 +349,6 @@ class Mode:
         sx, sy = start
         ex, ey = end
         piece = self.board[sx][sy]
-        print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
             print("Invalid move!")
@@ -401,9 +402,9 @@ class Mode:
 
             # Handle promotion for pawn reaching the last rank
             if piece.lower() == 'p' and (ex == 0 or ex == 7):
-                self.prompt_promotion()
                 self.promotion_lock = True
                 self.piece_to_promote = [ex, ey]
+                self.prompt_promotion()
                 return
 
         # If player move sabotage checkmate, return
