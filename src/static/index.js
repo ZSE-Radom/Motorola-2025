@@ -366,6 +366,7 @@ function renderSetup(game_type) {
                 document.getElementById('chessGameStartButtonGM').onclick = function() {
 
                 setupOptions['gm_name'] = document.querySelector('.pgnBtn.active')?.textContent || null;
+                setupOptions['game_mode'] = 'gm';
                 setupOptions['one_player'] = true; // TODO
                     fetch('/startOffline', {
                         method: 'POST',

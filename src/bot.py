@@ -2,8 +2,6 @@ import copy
 import math
 import random
 
-# TODO albo bot wykonuje złe ruchy albo gra tak myśli
-
 PIECE_VALUES = {
     'p': 1, 'P': 1,
     'n': 3, 'N': 3,
@@ -270,6 +268,8 @@ class ChessBot:
         
         # First try to use PGN database moves
         if self.move_database:
+            print('dupa')
+            print(self.move_database)
             position_key = self.get_position_key(board, current_turn)
             
             # Check if we're following a known game line
@@ -336,6 +336,17 @@ class ChessBot:
                 if beta <= alpha:
                     break
             return min_eval, best_move
+        
+
+    def get_next_moves_suggestion(self):
+        """Return possible continuation moves for UI display"""
+        return [f"{self.coord_to_notation(start)}-{self.coord_to_notation(end)}" 
+                for (start, end) in self.next_moves[:3]]
+
+    def coord_to_notation(self, coord):
+        """Convert board coordinates to chess notation"""
+        row, col = coord
+        return chr(col + ord('a')) + str(8 - row)
 
 if __name__ == "__main__":
     board = [
@@ -361,13 +372,3 @@ if __name__ == "__main__":
     bot_move = bot.get_move(board, current_turn)
     if bot_move:
         board = make_move(board, bot_move)
-
-    def get_next_moves_suggestion(self):
-        """Return possible continuation moves for UI display"""
-        return [f"{self.coord_to_notation(start)}-{self.coord_to_notation(end)}" 
-                for (start, end) in self.next_moves[:3]]
-
-    def coord_to_notation(self, coord):
-        """Convert board coordinates to chess notation"""
-        row, col = coord
-        return chr(col + ord('a')) + str(8 - row)

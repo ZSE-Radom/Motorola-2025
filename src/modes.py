@@ -488,70 +488,6 @@ class BlitzMode(Mode):
         ]
 
 
-class GMMode(Mode):
-    def __init__(self, name, one_player=True, human_color="Biały"):
-        super().__init__(name, one_player, human_color)
-        self.master_db = MasterDatabase()
-        self.master_db.load_default_archmasters()
-        self.game_mode = "arcymistrz"
-        self.suggestions_enabled = False
-        self.nerd_view_enabled = False
-
-    def initialize_board(self):
-        return [
-            ["r", "n", "b", "q", "k", "b", "n", "r"],
-            ["p", "p", "p", "p", "p", "p", "p", "p"],
-            [" "] * 8,
-            [" "] * 8,
-            [" "] * 8,
-            [" "] * 8,
-            ["P", "P", "P", "P", "P", "P", "P", "P"],
-            ["R", "N", "B", "Q", "K", "B", "N", "R"]
-        ]
-
-    def perform_bot_move(self):
-        if not self.running or self.current_turn != self.bot_color:
-            return
-
-        move_suggestion = self.master_db.get_move_suggestion(self.board)
-
-        if move_suggestion:
-            start = move_suggestion['from']
-            end = move_suggestion['to']
-            print('perform bot move 472')
-            self.move_piece(start, end)
-            self.bot_has_moved = True
-            add_event(self.session_id, {
-                'type': 'arcymaster_move',
-                'from': start,
-                'to': end,
-                'archmaster': move_suggestion['archmaster']
-            })
-        else:
-            super().perform_bot_move()
-
-    def toggle_suggestions(self):
-        self.suggestions_enabled = not self.suggestions_enabled
-        return self.suggestions_enabled
-
-    def get_move_suggestions(self):
-        if not self.suggestions_enabled:
-            return []
-
-        return self.master_db.get_move_statistics(self.board)
-
-    def toggle_nerd_view(self):
-        self.nerd_view_enabled = not self.nerd_view_enabled
-        return self.nerd_view_enabled
-
-    def get_nerd_view_data(self):
-        current_stats = self.master_db.get_move_statistics(self.board)
-        db_stats = self.master_db.get_database_stats()
-        return {
-            "move_suggestions": current_stats,
-            "database_stats": db_stats
-        }
-
 class X960Mode(Mode):
     def __init__(self, one_player=False, human_color="Biały"):
         super().__init__("960", one_player, human_color)
@@ -606,14 +542,28 @@ class GMMode(Mode):
         super().__init__(name, one_player, human_color)
         self.pgn_processor = PGNProcessor()
         self.move_database = None
-        
+        self.gm_name = name
         if self.gm_name:
             pgn_path = f'./game_data/pgn_games/{self.gm_name}'
             if os.path.exists(pgn_path):
                 self.pgn_processor.parse_pgn(pgn_path)
                 self.move_database = self.pgn_processor.move_database
+
+        print("Move database:", self.move_database)
         
         # Initialize bot with move database
         self.bot = ChessBot(bot_color=self.bot_color, 
                           search_depth=2,
                           move_database=self.move_database)
+        
+    def initialize_board(self):
+        return [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ]

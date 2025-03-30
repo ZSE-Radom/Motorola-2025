@@ -50,12 +50,15 @@ def start_offline():
         allow_for_revert = data.get('allow_for_revert', True)
         gm_name = data.get('gm_name', False)
 
-        print('Custom board:', custom_board)
+        print(mode_name)
 
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
-
-        mode_instance = available_modes[mode_name](one_player=one_player, human_color=human_color)
+        
+        if mode_name == 'gm':
+            mode_instance = available_modes[mode_name](name=gm_name, one_player=one_player, human_color=human_color)
+        else:
+            mode_instance = available_modes[mode_name](one_player=one_player, human_color=human_color)
         session_id = session.get('session_id') or os.urandom(12).hex()
         session['session_id'] = session_id
         mode_instance.session_id = session_id
