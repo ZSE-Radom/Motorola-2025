@@ -331,7 +331,8 @@ def custom_board_layout():
 @app.route('/listPGNs', methods=['GET'])
 def list_pgns():
     try:
-        folder = './game_data/pgn_games'
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        folder = os.path.join(base_dir, 'game_data', 'pgn_games')
         pgn_files = [f for f in os.listdir(folder) if f.endswith('.pgn')]
         pgn_files.sort(key=lambda x: os.path.getmtime(os.path.join(folder, x)), reverse=True)
         return jsonify({'pgns': pgn_files})

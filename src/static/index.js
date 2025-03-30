@@ -303,10 +303,16 @@ function renderSetup(game_type) {
                     updateSlider();
                     if (currentIndex === 0) {
                         setupOptions['bot_mode'] = 'easy';
+                        document.getElementById('chessName2').src = 'SochAI (Łatwy)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     } else if (currentIndex === 1) {
                         setupOptions['bot_mode'] = 'medium';
+                        document.getElementById('chessName2').src = 'mAItiuu (Średni)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     } else if (currentIndex === 2) {
                         setupOptions['bot_mode'] = 'hard';
+                        document.getElementById('chessName2').src = 'MuchAI (Trudny)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     }
                     // TODO bot może być tylko czarny :(
                 });
@@ -325,9 +331,6 @@ function renderSetup(game_type) {
                         setupOptions['custom_board'] = getCustomBoardData();
                     } else {
                         setupOptions['custom_board'] = null;
-                    }
-                    if (setupOptions['bot_mode'] === undefined) {
-                        createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
                     }
                     setupOptions['game_mode'] = 'classic'; // Default mode for bot
                     setupOptions['one_player'] = true; // TODO
@@ -1041,6 +1044,9 @@ function animateChessBoard(type) {
         document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
     } else if (type === 'setupBot') {
         document.getElementById('chessSetupBot').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
+    } else if (type === 'setupGM') {
+        document.getElementById('chessSetupGM').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
     } else if (type === 'close') {
         document.getElementById('chessSocial').style.animation = "slidedown-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
