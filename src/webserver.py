@@ -36,7 +36,9 @@ def profile():
 
 @app.route('/listModes', methods=['GET'])
 def list_modes():
-    return jsonify({'modes': list(available_modes.keys())})
+    temp_modes = available_modes.copy()
+    temp_modes.pop('gm', None)
+    return jsonify({'modes': list(temp_modes.keys())})
 
 
 @app.route('/startOffline', methods=['POST'])
