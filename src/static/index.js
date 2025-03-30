@@ -343,6 +343,17 @@ function renderSetup(game_type) {
                         } else {
                             editMode = false;
                             document.getElementById('chessBoardEditor').style.display = 'none';
+                            if (setupOptions['bot_mode'] === 'easy') {
+                                document.getElementById('chessName2').textContent = 'SochAI (Łatwy)';
+                                document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
+                            } else if (setupOptions['bot_mode'] === 'medium') {
+                                console.log('medium');
+                                document.getElementById('chessName2').textContent = 'mAItiuu (Średni)';
+                                document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
+                            } else if (setupOptions['bot_mode'] === 'hard') {
+                                document.getElementById('chessName2').textContent = 'MuchAI (Trudny)';
+                                document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
+                            }
                             document.getElementById('chessSetupBot').animate([
                                 { transform: 'translateY(0)' },
                                 { transform: 'translateY(-100%)' }
@@ -358,17 +369,7 @@ function renderSetup(game_type) {
                                 easing: 'ease-in-out'
                             });
                             setTimeout(() => {
-                                if (setupOptions['bot_mode'] === 'easy') {
-                                    document.getElementById('chessName2').textContent = 'SochAI (Łatwy)';
-                                    document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
-                                } else if (setupOptions['bot_mode'] === 'medium') {
-                                    console.log('medium');
-                                    document.getElementById('chessName2').textContent = 'mAItiuu (Średni)';
-                                    document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
-                                } else if (setupOptions['bot_mode'] === 'hard') {
-                                    document.getElementById('chessName2').textContent = 'MuchAI (Trudny)';
-                                    document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
-                                }
+
                                 document.getElementById('chessSetupBot').style.display = 'none';
                                 document.getElementById('chessGame').style.display = 'flex';
                                 document.getElementById('chessSocial').style.display = 'block';
