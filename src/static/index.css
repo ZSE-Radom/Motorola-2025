@@ -834,8 +834,11 @@ input:checked + .slider:before {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin: 2%;
+    margin-top: 2%;
+    margin-left: 25.5%;
+    margin-right: auto;
     height: 10%;
+    width: 60.5%;
 }
 
 #chessBoardEditorFields {
@@ -859,7 +862,7 @@ input:checked + .slider:before {
     background-color: #D2AB99;
     border-radius: 1rem;
     width: 92%;
-    margin: 4%; 
+    margin: 4%;
     padding: 2rem;
     z-index: 1;
     display: none;
