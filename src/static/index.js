@@ -1,5 +1,4 @@
 let popUpCount = 0;
-let username = '';
 let setupOptions = {};
 let currentlyPlaying = false;
 let boardInitialized = false;
@@ -551,7 +550,10 @@ function handleDrop(event) {
 
         const newPieceImg = document.createElement('img');
         newPieceImg.className = 'piece';
-        const pieceName = piece.split('/').pop().replace('.svg', '').replace('x', '');
+        let pieceName = piece.split('/').pop().replace('.svg', '').replace('x', '');
+        if (piece.endsWith('x.svg')) {
+            pieceName = pieceName.toUpperCase()
+        }
         newPieceImg.src = pieceName === pieceName.toUpperCase()
             ? `/static/figures/${pieceName}x.svg`
             : `/static/figures/${pieceName}.svg`;
@@ -585,7 +587,7 @@ function handleDrop(event) {
 
 function handleDragStart(event) {
     if (!editMode) return; // Check if in edit mode
-    const piece = event.target.dataset.piece;
+    const piece = event.target.src;
     if (piece) {
         event.dataTransfer.setData('text/plain', piece);
         event.dataTransfer.effectAllowed = 'move';
@@ -597,7 +599,7 @@ function handleDragStart(event) {
 
 function handlePaletteDragStart(event) {
     if (!editMode) return; // Check if in edit mode
-    const piece = event.target.dataset.piece;
+    const piece = event.target.src;
     if (piece) {
         event.dataTransfer.setData('text/plain', piece);
         event.dataTransfer.effectAllowed = 'move';
@@ -621,42 +623,6 @@ function handleDragEnd(event) {
         }
         movedPiece = null;
     }
-}
-
-function createSquare(row, col, piece, letters) {
-    const square = document.createElement('div');
-    const isLightSquare = (row + col) % 2 === 0;
-
-    const pieceImage = document.createElement('img');
-
-    if (piece != '' || piece != ' ' || piece != null || piece != undefined)  {
-        if (piece === piece.toUpperCase()) pieceImage.src = `/static/figures/${piece}x.svg`;
-        else pieceImage.src = `/static/figures/${piece}.svg`;
-    }
-
-    square.className = 'square';
-    square.id = row * 8 + col;
-    square.style.backgroundColor = isLightSquare ? '#FCF7FF' : '#56876D';
-    if (piece != ' ') square.appendChild(pieceImage);
-
-    if (col === 0) {
-        const boardNumber = document.createElement('div');
-        boardNumber.className = 'boardNumbers';
-        boardNumber.style.color = isLightSquare ? '#56876D' : '#FCF7FF';
-        boardNumber.textContent = row + 1;
-        square.appendChild(boardNumber);
-    }
-
-    if (row === 7) {
-        const boardLetter = document.createElement('div');
-        boardLetter.className = 'boardLetters';
-        boardLetter.style.color = isLightSquare ? '#56876D' : '#FCF7FF';
-        boardLetter.textContent = letters[col];
-        square.appendChild(boardLetter);
-    }
-
-    square.addEventListener('click', () => handleSquareClick(row, col));
-    return square;
 }
 
 function updateTimers(time) {
@@ -710,7 +676,7 @@ function executeMove(posx, posy, newPosx, newPosy) {
         body: JSON.stringify({ move: [posx, posy, newPosx, newPosy] })
     })
     .then(res => res.json())
-    .then(data => {
+    .then(() => {
         //updateChessBoard(data.board);
         chessBoard.style.pointerEvents = 'auto'; // Re-enable
         performing_move = false;
@@ -844,7 +810,7 @@ function closePopUp(button) {
     }
 }
 
-function initStats(game_mode, game_type, first_player_name, second_player_name) {
+function initStats(game_mode, game_type) {
     document.getElementById('chessGameType').innerHTML = `Gra ${game_mode}, typ: ${game_type}`;
 }
 
@@ -892,63 +858,6 @@ function closeModes() {
     }
 }
 
-function checkForEvents() {
-    fetch('/events')
-    .then(res => {
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return res.json();
-    })
-    .then(data => {
-        if (data.error) {
-            createPopUp('error', 'Błąd z połączeniem', data.error);
-            return;
-        }
-
-        if (!data.events || !Array.isArray(data.events)) {
-            return;
-        }
-
-        for (const event of data.events) {
-            switch(event) {
-                case 'resign':
-                    handleGameEnd('Koniec gry', 'Gracz się poddał!');
-                    break;
-                case 'draw':
-                    handleGameEnd('Koniec gry', 'Remis!');
-                    break;
-                case 'time_over':
-                    handleGameEnd('Koniec gry', 'Czas się skończył!');
-                    break;
-                case 'end':
-                    handleGameEnd('Koniec gry', 'Gra została zakończona!');
-                    break;
-                case 'check':
-                    createPopUp('info', 'Szach!', 'Twój król jest atakowany!');
-                    break;
-                case 'promotion':
-                    handlePromotion();
-                    break;
-                case 'bot_move_begin':
-                    document.body.style.cursor = 'wait';
-                    break;
-                case 'bot_move_finish':
-                    document.body.style.cursor = 'default';
-                    refreshGameState();
-                    break;
-                default:
-                    createPopUp('info', 'Zdarzenie', event);
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error checking events:', error);
-        createPopUp('error', 'Błąd połączenia', 'Nie można pobrać zdarzeń z serwera.');
-        terminateGame();
-    });
-}
-
 function handleGameEnd(title, message) {
     animateChessBoard('close');
     setTimeout(() => {
@@ -966,15 +875,6 @@ function handlePromotion() {
     createPopUp('info', 'Promocja', 'Pionek został promowany do Hetmana');
 }
 
-function terminateGame() {
-    mutePopups = true;
-    document.getElementById('loading').style.display = 'block';
-    setTimeout(() => {
-        document.getElementById('loading').style.opacity = '1';
-    }, 100);
-    document.getElementById('loinfo').textContent = 'Utracono połączenie z serwerem...';
-}
-
 const slider = document.querySelector('#feed');
 let mouseDown = false;
 let startX, scrollLeft;
@@ -984,7 +884,7 @@ let startDragging = function (e) {
     scrollLeft = slider.scrollLeft;
 };
 
-let stopDragging = function (event) {
+let stopDragging = function () {
     mouseDown = false;
 };
 
@@ -1181,9 +1081,6 @@ function saveProfiles() {
     loadProfiles();
     document.getElementById('init').style.display = 'none';
 }
-
-let currentPlayer = 1;
-
 
 function loadProfiles() {
     // Get profile data from localStorage
