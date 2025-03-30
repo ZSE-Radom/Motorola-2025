@@ -1144,7 +1144,7 @@ document.getElementById('darkmode').addEventListener('change', (e) => {
 
 window.addEventListener('load', () => {
     const Name1 = localStorage.getItem('player1Name');
-    if (Name1 === null || Name1.length === 0) {
+    if (Name1 === null || Name1.length < 1) {
         document.getElementById('init').style.display = 'block';
     }
     const musicVolume = localStorage.getItem('musicVolume');
