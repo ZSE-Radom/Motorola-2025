@@ -84,7 +84,7 @@ class Mode:
             raise ValueError("Invalid board dimensions. The board must be 8x8.")
         self.board = custom_board
 
-    def highlight_moves(self, x, y, buttons):
+    def highlight_moves(self, x, y, checkflag, buttons):
         piece = self.board[x][y]
 
         if piece == " ":
@@ -97,7 +97,7 @@ class Mode:
 
         # Only allow moves if the piece belongs to the current turn
         # Fix the inverted logic - this was causing valid_moves to always be empty
-        if (self.current_turn == "Biały" and piece.islower() and self.checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and self.checkflag == 0):
+        if (self.current_turn == "Biały" and piece.islower() and checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and checkflag == 0):
             return  # This piece doesn't belong to the current player
 
         if self.one_player and self.current_turn == self.bot_color:
@@ -217,7 +217,7 @@ class Mode:
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
                     self.current_turn == "Czarny" and self.board[i][j].islower()):
-                    self.highlight_moves(i, j, None)
+                    self.highlight_moves(i, j, 0, None)
                     for move in self.valid_moves:
                         piece = self.board[i][j]
                         # Save state
@@ -256,18 +256,16 @@ class Mode:
         opponent_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
         is_checked = False
 
-        self.checkflag = 1
         for i in range(8):
             for j in range(8):
                 piece = self.board[i][j]
                 if (opponent_turn == "Biały" and piece.isupper()) or (opponent_turn == "Czarny" and piece.islower()):
-                    self.highlight_moves(i, j, None)
+                    self.highlight_moves(i, j, 1, None)
                     if (x, y) in self.valid_moves:
                         is_checked = True
                         break
             if is_checked:
                 break
-        self.checkflag = 0
 
         return is_checked
 
