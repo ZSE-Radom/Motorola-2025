@@ -26,13 +26,19 @@ class Mode:
         self.session_id = ''
         self.allow_for_revert = False
         self.gm_name = None
+        self.bot_mode = 'easy'
 
         self.one_player = one_player
         self.human_color = human_color
         self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
         self.bot_has_moved = False
         if one_player:
-            self.bot = ChessBot(bot_color=self.bot_color, search_depth=2)
+            if self.bot_mode == 'hard':
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=4)
+            elif self.bot_mode == 'medium':
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=3)
+            else:
+                self.bot = ChessBot(bot_color=self.bot_color, search_depth=2)
 
         self.castling_rights = {
             "Biały": {"kingside": True, "queenside": True},

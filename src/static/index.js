@@ -6,7 +6,7 @@ let mutePopups = false;
 let performing_move = false;
 let boardAltered = false;
 let editMode = false;
-let pfpsrclist = ['/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
+let pfpsrclist = ['/static/profiles/1.png', '/static/profiles/2.png', '/static/profiles/3.png', '/static/profiles/4.png', '/static/profiles/5.png', '/static/profiles/6.png', '/static/profiles/7.png', '/static/profiles/8.png', '/static/profiles/9.png', '/static/profiles/10.png', '/static/profiles/11.png', '/static/profiles/12.png', '/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
 let rInterval = null;
 
 function getCustomBoardData() {
@@ -43,6 +43,7 @@ function unsetIntervals() {
 function renderSetup(game_type) {
     let boardData;
     editMode = true;
+    loadProfiles();
     document.getElementById('chessBoardEditor').style.display = 'block';
     if (game_type === 'human') {
         document.getElementById('chessStats').style.display = 'none';
@@ -86,14 +87,43 @@ function renderSetup(game_type) {
                     slider.style.background = colors[currentIndex];
                 }
 
+                let canOnlineStart = false;
+
                 toggle.addEventListener("click", () => {
                     currentIndex = (currentIndex + 1) % options.length;
                     updateSlider();
                     if (currentIndex === 0) {
                         setupOptions['game_type'] = 'offline';
                     } else if (currentIndex === 1) {
-                        createPopUp('info', 'Informacja', 'Gra online jest w trakcie tworzenia!');
                         setupOptions['game_type'] = 'online';
+
+                        fetch('/createOnlineGame', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                        }).then(res => res.json())
+                        .then(data => {
+                            if (data.error) {
+                                createPopUp('error', 'Błąd z połączeniem', data.error);
+                            } else {
+                                createPopUp('info', 'Gra online', 'Gra online została utworzona! Oczekiwanie na drugiego gracza...');
+                                fetch('/canGameStart', {
+                                    method: 'GET',
+                                    headers: { 'Content-Type': 'application/json' },
+                                }).then(res => res.json())
+                                .then(data => {
+                                    if (data.error) {
+                                        createPopUp('error', 'Błąd z połączeniem', data.error);
+                                    } else {
+                                        if (data.ready) {
+                                            createPopUp('info', 'Gra online', 'Drugi gracz dołączył! Rozpocznij grę!');
+                                            canOnlineStart = true;
+                                        } else {
+                                            createPopUp('info', 'Gra online', 'Oczekiwanie na drugiego gracza...');
+                                        }
+                                    }
+                                });
+                            }
+                        });
                     }
                 });
 
@@ -135,56 +165,92 @@ function renderSetup(game_type) {
                 }, 1500);
 
                 document.getElementById('chessGameStartButton').onclick = function() {
-                    if (boardAltered) {
-                        setupOptions['custom_board'] = getCustomBoardData();
-                    } else {
-                        setupOptions['custom_board'] = null;
-                    }
-                    setupOptions['allow_for_revert'] = document.getElementById('allowUndo').checked;
-                    if (setupOptions['game_mode'] === undefined) {
-                        createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
-                    } else {
-                        fetch('/startOffline', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(setupOptions)
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            editMode = false;
-                            document.getElementById('chessBoardEditor').style.display = 'none';
-                            if (data.error) {
-                                createPopUp('error', 'Błąd z połączeniem', data.error);
-                            } else {
+                    if (setupOptions['game_mode'] != 'online') {
+                        if (boardAltered) {
+                            setupOptions['custom_board'] = getCustomBoardData();
+                        } else {
+                            setupOptions['custom_board'] = null;
+                        }
+                        setupOptions['allow_for_revert'] = document.getElementById('allowUndo').checked;
+                        if (setupOptions['game_mode'] === undefined) {
+                            createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
+                        } else {
+                            fetch('/startOffline', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(setupOptions)
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                editMode = false;
+                                document.getElementById('chessBoardEditor').style.display = 'none';
+                                if (data.error) {
+                                    createPopUp('error', 'Błąd z połączeniem', data.error);
+                                } else {
 
-                                document.getElementById('chessSetupHuman').animate([
-                                    { transform: 'translateY(0)' },
-                                    { transform: 'translateY(-100%)' }
-                                ], {
-                                    duration: 1000,
-                                    easing: 'ease-in-out'
+                                    document.getElementById('chessSetupHuman').animate([
+                                        { transform: 'translateY(0)' },
+                                        { transform: 'translateY(-100%)' }
+                                    ], {
+                                        duration: 1000,
+                                        easing: 'ease-in-out'
+                                    });
+                                    document.getElementById('chessBoard').animate([
+                                        { transform: 'translateX(0)' },
+                                        { transform: 'translateX(-25%)' }
+                                    ], {
+                                        duration: 1000,
+                                        easing: 'ease-in-out'
+                                    });
+                                    setTimeout(() => {
+                                        document.getElementById('chessSetupHuman').style.display = 'none';
+                                        document.getElementById('chessSetupGM').style.display = 'none';
+                                        document.getElementById('chessSetupBot').style.display = 'none';
+                                        document.getElementById('chessGame').style.display = 'flex';
+                                        document.getElementById('chessSocial').style.display = 'block';
+                                        document.getElementById('chessStats').style.display = 'block';
+                                        initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                                        initChessBoard(data.board, data.timer);
+                                        rInterval = setInterval(refreshTimer, 500);
+                                        //setInterval(checkForEvents, 500);
+                                    }, 1000);
+                                }
+                            });
+                        }
+                    } else if (setupOptions['game_type'] === 'online') {
+                        if (canOnlineStart) {
+                        if (boardAltered) {
+                            setupOptions['custom_board'] = getCustomBoardData();
+                        } else {
+                            setupOptions['custom_board'] = null;
+                        }
+                        setupOptions['allow_for_revert'] = document.getElementById('allowUndo').checked;
+                            if (setupOptions['game_mode'] === undefined) {
+                                createPopUp('error', 'Błąd', 'Wybierz tryb gry!');
+                            } else {
+                                fetch('/startOnline', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(setupOptions)
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.error) {
+                                        createPopUp('error', 'Błąd z połączeniem', data.error);
+                                    } else {
+                                        editMode = false;
+                                        document.getElementById('chessBoardEditor').style.display = 'none';
+                                        document.getElementById('chessGame').style.display = 'flex';
+                                        document.getElementById('chessSocial').style.display = 'block';
+                                        document.getElementById('chessStats').style.display = 'block';
+                                        initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
+                                        initChessBoard(data.board, data.timer);
+                                        rInterval = setInterval(refreshTimer, 500);
+                                        //setInterval(checkForEvents, 500);
+                                    }
                                 });
-                                document.getElementById('chessBoard').animate([
-                                    { transform: 'translateX(0)' },
-                                    { transform: 'translateX(-25%)' }
-                                ], {
-                                    duration: 1000,
-                                    easing: 'ease-in-out'
-                                });
-                                setTimeout(() => {
-                                    document.getElementById('chessSetupHuman').style.display = 'none';
-                                    document.getElementById('chessSetupGM').style.display = 'none';
-                                    document.getElementById('chessSetupBot').style.display = 'none';
-                                    document.getElementById('chessGame').style.display = 'flex';
-                                    document.getElementById('chessSocial').style.display = 'block';
-                                    document.getElementById('chessStats').style.display = 'block';
-                                    initStats(data.game_mode, data.game_type, data.first_player_name, data.second_player_name);
-                                    initChessBoard(data.board, data.timer);
-                                    rInterval = setInterval(refreshTimer, 500);
-                                    //setInterval(checkForEvents, 500);
-                                }, 1000);
                             }
-                        });
+                        }
                     }
                 }
             }
@@ -207,7 +273,7 @@ function renderSetup(game_type) {
             } else {
                 boardData = data.board;
                 initChessBoard(boardData, 0);
-                const botDifficulties = ["Łatwy", "Średni", "Trudny"];
+                const botDifficulties = ["Łatwy (SochAI)", "Średni (mAItiuu)", "Trudny (MuchAI)"];
                 const colors = ["#FC6471", "#FFD700", "#7D5BA6"];
                 const toggle = document.getElementById("toggleBot");
                 const slider = toggle.querySelector(".slider");
@@ -236,11 +302,18 @@ function renderSetup(game_type) {
                     updateSlider();
                     if (currentIndex === 0) {
                         setupOptions['bot_mode'] = 'easy';
+                        document.getElementById('chessName2').src = 'SochAI (Łatwy)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     } else if (currentIndex === 1) {
                         setupOptions['bot_mode'] = 'medium';
+                        document.getElementById('chessName2').src = 'mAItiuu (Średni)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     } else if (currentIndex === 2) {
                         setupOptions['bot_mode'] = 'hard';
+                        document.getElementById('chessName2').src = 'MuchAI (Trudny)';
+                        document.getElementById('chessPfp2').src = pfpsrclist[Math.floor(Math.random() * pfpsrclist.length)];
                     }
+                    // TODO bot może być tylko czarny :(
                 });
 
                 updateSlider();

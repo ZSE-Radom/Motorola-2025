@@ -50,6 +50,7 @@ def start_offline():
         human_color = data.get('human_color', "Biały")
         custom_board = data.get('custom_board', None)
         allow_for_revert = data.get('allow_for_revert', True)
+        bot_mode = data.get('bot_mode', 'easy')
         gm_name = data.get('gm_name', False)
 
         print(mode_name)
@@ -87,6 +88,9 @@ def start_offline():
 
         if gm_name:
             mode_instance.gm_name = gm_name
+
+        if bot_mode:
+            mode_instance.bot_mode = bot_mode
 
         return jsonify({
             'board': mode_instance.board,
@@ -342,6 +346,42 @@ def handle_promotion():
     mode = modes_store[session_id]
     mode.promotion_choice = piece
     return jsonify({'status': 'ok'})
+
+online_games = {}
+
+@app.route('/createOnlineGame', methods=['POST'])
+def create_online_game():
+    session_id = session.get('session_id') or os.urandom(12).hex()
+    session['session_id'] = session_id
+
+    print(online_games)
+    for game_id, game in online_games.items():
+        if game.get('player1') is None:
+            game['player1'] = session_id
+            return jsonify({'session_id': game_id})
+        if game.get('player2') is None:
+            game['player2'] = session_id
+            return jsonify({'session_id': game_id})
+    
+    online_games[session_id] = {
+        'player1': session_id,
+        'player2': None
+    }
+
+    return jsonify({'session_id': session_id})
+
+@app.route('/canGameStart', methods=['GET'])
+def can_game_start():
+    session_id = session.get('session_id')
+    if not session_id or session_id not in online_games:
+        return jsonify({'status': 'waiting'})
+    
+    game = online_games.get(session_id, {})
+    if game.get('player1') is None or game.get('player2') is None:
+        return jsonify({'status': 'waiting'})
+    
+    return jsonify({'status': 'ready'})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
