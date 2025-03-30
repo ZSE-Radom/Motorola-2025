@@ -27,6 +27,9 @@ class Mode:
         self.allow_for_revert = False
         self.gm_name = None
 
+        self.promotion_lock = False
+        self.piece_to_promote = None
+
         self.one_player = one_player
         self.human_color = human_color
         self.bot_color = "Czarny" if human_color == "Biały" else "Biały"
@@ -166,17 +169,17 @@ class Mode:
 
     def initialize_board(self):
         raise NotImplementedError("initialize_board must be implemented in subclasses")
-    
+
     def notation_to_coord(self, notation):
         """Converts chess notation (e.g., 'e2') to board coordinates (row, col)."""
         col = ord(notation[0]) - ord('a')
         row = 8 - int(notation[1])
         return row, col
-    
+
     def revert(self):
         if not self.allow_for_revert:
             return
-        
+
         if len(self.move_history) < 1:
             return
 
@@ -265,17 +268,46 @@ class Mode:
 
     def prompt_promotion(self):
         add_event(self.session_id, 'promotion')
-        return 'Q' if self.current_turn == "Biały" else 'q'
-        # TODO wybór
-        '''
+
+
+    def promotion(self, selected_piece):
+        if self.piece_to_promote is None:
+            return False
+        x, y = self.piece_to_promote
+        piece = self.board[x][y]
+
+        if not (piece.lower() == 'p' and (x == 0 or x == 7)):
+            self.disable_promotion_lock()
+            return False
+
+        if selected_piece.lower() not in ['q', 'r', 'b', 'n']:
+            self.disable_promotion_lock()
+            return False
+
+        if piece.isupper():
+            self.board[x][y] = selected_piece.upper()
         else:
-            valid_pieces = ['Q', 'R', 'B', 'N'] if self.current_turn == "Biały" else ['q', 'r', 'b', 'n']
-            while True:
-                print("Choose promotion piece (Q/R/B/N):")
-                choice = input().upper()
-                if choice in ['Q', 'R', 'B', 'N']:
-                    return choice if self.current_turn == "Biały" else choice.lower()'
-        '''
+            self.board[x][y] = selected_piece.lower()
+        self.disable_promotion_lock()
+        return True
+
+    def disable_promotion_lock(self):
+        self.promotion_lock = False
+
+        self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
+
+        if self.check_checkmate():
+            self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
+            add_event(self.session_id, 'end')
+            self.running = False
+
+        self.check_winner()
+
+        if self.one_player and self.current_turn == self.bot_color and self.running and not self.bot_has_moved:
+            add_event(self.session_id, 'bot_move_begin')
+            self.bot_has_moved = False
+            self.perform_bot_move()
+
 
     def is_valid_move(self, start, end):
         if not self.valid_moves:
@@ -369,7 +401,10 @@ class Mode:
 
             # Handle promotion for pawn reaching the last rank
             if piece.lower() == 'p' and (ex == 0 or ex == 7):
-                self.board[ex][ey] = self.prompt_promotion()
+                self.prompt_promotion()
+                self.promotion_lock = True
+                self.piece_to_promote = [ex, ey]
+                return
 
         # If player move sabotage checkmate, return
         if self.check_for_check():
@@ -383,9 +418,10 @@ class Mode:
         self.move_history.append(move_notation)
         self.last_move = (piece, start, end)
 
+        if self.promotion_lock:
+            return
+
         self.current_turn = "Czarny" if self.current_turn == "Biały" else "Biały"
-
-
 
         if self.check_checkmate():
             self.winner = "Czarny" if self.current_turn == "Biały" else "Biały"
@@ -447,13 +483,13 @@ class Mode:
     def perform_bot_move(self):
         if self.bot_has_moved:
             return
-        
+
         if self.gm_name:
             pgn_file = './game_data/pgn_games/' + self.gm_name
 
             if not os.path.exists(pgn_file):
                 pass
-            
+
             # parse next move from pgn file, probably finding this that occured most times
 
         bot_move = self.bot.get_move(self.board, self.current_turn)
@@ -574,12 +610,12 @@ class GMMode(Mode):
                 self.move_database = self.pgn_processor.move_database
 
         print("Move database:", self.move_database)
-        
+
         # Initialize bot with move database
-        self.bot = ChessBot(bot_color=self.bot_color, 
+        self.bot = ChessBot(bot_color=self.bot_color,
                           search_depth=2,
                           move_database=self.move_database)
-        
+
     def initialize_board(self):
         return [
             ["r", "n", "b", "q", "k", "b", "n", "r"],
