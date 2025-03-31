@@ -3,11 +3,14 @@ from modes import ClassicMode, BlitzMode, X960Mode, GMMode
 from flask_cors import CORS
 import os
 from utils import get_events
+import logging
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 app.secret_key = os.urandom(12).hex()
 
+log = logging.getLogger("werkzeug")
+log.disabled = True
 # Store game modes and sessions
 modes_store = {}
 available_modes = {
@@ -357,10 +360,10 @@ def create_online_game():
     try:
         data = request.json
         mode_name = data.get('game_mode', 'classic')
-        
+
         if mode_name not in available_modes:
             return jsonify({'error': 'Invalid mode'}), 400
-            
+
         session_id = session.get('session_id') or os.urandom(12).hex()
         session['session_id'] = session_id
 
@@ -369,7 +372,7 @@ def create_online_game():
             if game.get('player2') is None and game.get('player1') != session_id and game.get('mode_name') == mode_name:
                 # Join as player 2
                 game['player2'] = session_id
-                
+
                 # Create game instance if not already created
                 if 'mode_instance' not in game:
                     mode_instance = available_modes[mode_name](one_player=False, human_color="Biały")
@@ -378,21 +381,21 @@ def create_online_game():
                     mode_instance.board = mode_instance.initialize_board()
                     modes_store[game_id] = mode_instance
                     game['mode_instance'] = mode_instance
-                
+
                 return jsonify({
-                    'session_id': game_id, 
+                    'session_id': game_id,
                     'role': 'player2',
                     'board': modes_store[game_id].board,
                     'current_turn': modes_store[game_id].current_turn
                 })
-        
+
         # If no game with empty slot was found, create a new one
         mode_instance = available_modes[mode_name](one_player=False, human_color="Biały")
         mode_instance.session_id = session_id
         mode_instance.game_mode = mode_name
         mode_instance.board = mode_instance.initialize_board()
         modes_store[session_id] = mode_instance
-        
+
         online_games[session_id] = {
             'player1': session_id,
             'player2': None,
@@ -401,7 +404,7 @@ def create_online_game():
         }
 
         return jsonify({
-            'session_id': session_id, 
+            'session_id': session_id,
             'role': 'player1',
             'board': mode_instance.board,
             'current_turn': mode_instance.current_turn
@@ -415,11 +418,11 @@ def can_game_start():
         session_id = request.args.get('game_id') or session.get('session_id')
         if not session_id or session_id not in online_games:
             return jsonify({'status': 'waiting', 'message': 'Game not found'})
-        
+
         game = online_games.get(session_id)
         if game.get('player1') is None or game.get('player2') is None:
             return jsonify({'status': 'waiting', 'message': 'Waiting for opponent'})
-        
+
         # Game is ready to start
         mode_instance = modes_store.get(session_id)
         return jsonify({
@@ -437,14 +440,14 @@ def check_online_turn():
         session_id = request.args.get('game_id') or session.get('session_id')
         if not session_id or session_id not in online_games:
             return jsonify({'error': 'Game not found'}), 400
-            
+
         game = online_games.get(session_id)
         mode_instance = modes_store.get(session_id)
-        
+
         # Determine player color based on session id
         is_white = game.get('player1') == session.get('session_id')
         player_turn = "Biały" if is_white else "Czarny"
-        
+
         return jsonify({
             'is_your_turn': player_turn == mode_instance.current_turn,
             'current_turn': mode_instance.current_turn,

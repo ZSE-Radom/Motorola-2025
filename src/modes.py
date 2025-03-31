@@ -4,7 +4,7 @@ import random
 import os
 from tabnanny import check
 
-from utils import add_event
+from utils import add_event, load_from_file
 from bot import ChessBot
 from pgn import PGNProcessor
 import copy
@@ -506,7 +506,7 @@ class Mode:
         if bot_move is None:
             self.resign()
             return
-        
+
 
         print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
@@ -616,6 +616,7 @@ class GMMode(Mode):
         self.gm_name = name
         if self.gm_name:
             pgn_path = f'./game_data/pgn_games/{self.gm_name}'
+            pgn_path = load_from_file(pgn_path)
             if os.path.exists(pgn_path):
                 self.pgn_processor.parse_pgn(pgn_path)
                 self.move_database = self.pgn_processor.move_database

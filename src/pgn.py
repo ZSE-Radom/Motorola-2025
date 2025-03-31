@@ -19,7 +19,7 @@ class PGNProcessor:
         """Main method to process PGN files"""
         with open(file_path) as f:
             pgn_text = f.read()
-        
+
         games = pgn_text.split("\n\n[Event ")
         for game_text in games[1:]:  # Skip empty first element
             game_text = "[Event " + game_text
@@ -29,15 +29,15 @@ class PGNProcessor:
         """Process individual game from PGN"""
         moves = self.extract_moves(game_text)
         game_state = self.initial_game_state()
-        
+
         for san_move in moves:
             if san_move in ["1-0", "0-1", "1/2-1/2"]:
                 break
-            
+
             move_info = self.parse_san(san_move, game_state)
             if not move_info:
                 continue
-            
+
             from_pos, to_pos, promotion = move_info
             self.record_move(game_state, from_pos, to_pos)
             self.apply_move(game_state, from_pos, to_pos, promotion)
@@ -87,21 +87,21 @@ class PGNProcessor:
     def parse_san(self, san, game_state):
         """Convert SAN notation to board coordinates"""
         san = san.replace("+", "").replace("#", "").replace("!", "").replace("?", "")
-        
+
         # Handle castling
         if self.castling_regex.match(san):
             return self.parse_castling(san, game_state)
-        
+
         # Handle standard moves
         match = self.san_regex.match(san)
         if not match:
             return None
-        
+
         groups = match.groupdict()
         piece_type = groups["piece"] or "P"
         dest = groups["dest"]
         to_pos = self.notation_to_coords(dest)
-        
+
         # Find candidate pieces
         candidates = []
         for x in range(8):
@@ -112,13 +112,13 @@ class PGNProcessor:
                         candidates.append((x, y))
                     elif game_state["turn"] == "black" and piece.islower():
                         candidates.append((x, y))
-        
+
         # Filter by file/rank disambiguation
         if groups["file"]:
             candidates = [c for c in candidates if chr(c[1] + ord('a')) == groups["file"]]
         if groups["rank"]:
             candidates = [c for c in candidates if str(8 - c[0]) == groups["rank"]]
-        
+
         # Find valid moves
         for candidate in candidates:
             moves = self.generate_moves(game_state, candidate)
@@ -127,14 +127,14 @@ class PGNProcessor:
                 if game_state["turn"] == "black" and promotion:
                     promotion = promotion.lower()
                 return candidate, to_pos, promotion
-        
+
         return None
 
     def parse_castling(self, san, game_state):
         """Handle castling moves"""
         row = 7 if game_state["turn"] == "white" else 0
         king_pos = (row, 4)
-        
+
         if "O-O-O" in san:
             rook_from = (row, 0)
             rook_to = (row, 3)
@@ -143,7 +143,7 @@ class PGNProcessor:
             rook_from = (row, 7)
             rook_to = (row, 5)
             king_to = (row, 6)
-        
+
         return king_pos, king_to, None
 
     def generate_moves(self, game_state, from_pos):
@@ -151,13 +151,13 @@ class PGNProcessor:
         x, y = from_pos
         piece = game_state["board"][x][y]
         moves = []
-        
+
         if piece.upper() == "P":
             return self.generate_pawn_moves(game_state, from_pos)
         if piece.upper() == "N":
             return self.generate_knight_moves(from_pos)
         # Add other piece move generators
-        
+
         return moves
 
     def generate_pawn_moves(self, game_state, from_pos):
@@ -166,13 +166,13 @@ class PGNProcessor:
         moves = []
         direction = -1 if game_state["board"][x][y].isupper() else 1
         start_row = 6 if direction == -1 else 1
-        
+
         # Standard moves
         if game_state["board"][x + direction][y] == " ":
             moves.append((x + direction, y))
             if x == start_row and game_state["board"][x + 2*direction][y] == " ":
                 moves.append((x + 2*direction, y))
-        
+
         # Captures
         for dy in [-1, 1]:
             if 0 <= y + dy < 8:
@@ -180,7 +180,7 @@ class PGNProcessor:
                     moves.append((x + direction, y + dy))
                 elif (x + direction, y + dy) == game_state["en_passant"]:
                     moves.append((x + direction, y + dy))
-        
+
         return moves
 
     def generate_knight_moves(self, from_pos):
@@ -211,34 +211,34 @@ class PGNProcessor:
         x1, y1 = from_pos
         x2, y2 = to_pos
         piece = game_state["board"][x1][y1]
-        
+
         # Handle special moves
         if piece.upper() == "K":
             # Update castling rights
             game_state["castling"][piece.upper()] = False
             game_state["castling"][piece.upper().lower()] = False
-            
+
             # Handle castling
             if abs(y2 - y1) == 2:
                 rook_from = (x1, 7 if y2 > y1 else 0)
                 rook_to = (x1, 5 if y2 > y1 else 3)
                 game_state["board"][rook_to[0]][rook_to[1]] = game_state["board"][rook_from[0]][rook_from[1]]
                 game_state["board"][rook_from[0]][rook_from[1]] = " "
-        
+
         # Update board state
         game_state["board"][x2][y2] = piece
         game_state["board"][x1][y1] = " "
-        
+
         # Handle promotion
         if promotion:
             game_state["board"][x2][y2] = promotion
-        
+
         # Update en passant
         if piece.upper() == "P" and abs(x2 - x1) == 2:
             game_state["en_passant"] = ((x1 + x2) // 2, y1)
         else:
             game_state["en_passant"] = None
-        
+
         # Switch turns
         game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
 
