@@ -235,6 +235,31 @@ class Mode:
                             return False
         return True
 
+    def check_stalemate(self):
+        if self.check_for_check():
+            return
+
+        for i in range(8):
+            for j in range(8):
+                if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
+                    self.current_turn == "Czarny" and self.board[i][j].islower()):
+                    self.highlight_moves(i, j, 0, None)
+                    for move in self.valid_moves:
+                        piece = self.board[i][j]
+                        self.board[i][j] = " "
+                        self.board[move[0]][move[1]] = piece
+
+                        if not self.check_for_check():
+                            self.board[i][j] = piece
+                            self.board[move[0]][move[1]] = " "
+                            return False
+
+                        self.board[i][j] = piece
+                        self.board[move[0]][move[1]] = " "
+
+        return True
+
+
     def check_for_check(self):
 
         king_symbol = 'K' if self.current_turn == "Biały" else 'k'
@@ -423,6 +448,7 @@ class Mode:
             self.show_check_warning()
             return
 
+
         # Update move history with classic long notation
         move_notation = self.get_move_notation(piece, start, end)
         self.move_history.append(move_notation)
@@ -438,7 +464,9 @@ class Mode:
             add_event(self.session_id, 'end')
             self.running = False
 
-        # If player move sabotage checkmate, return
+        if self.check_stalemate():
+            add_event(self.session_id, 'draw')
+            self.running = False
 
         self.check_winner()
 
