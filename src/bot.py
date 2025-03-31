@@ -221,7 +221,7 @@ def evaluate_board(board):
                 value -= len(moves) * 0.1
             # Add center control bonus
             if (x, y) in CENTER_SQUARES:
-                value += 0.3 if piece.isupper() else -0.3
+                value += 0.5 if piece.isupper() else -0.5
             if piece.isupper():
                 score += value
             else:

@@ -494,26 +494,72 @@ class Mode:
         if self.bot_has_moved:
             return
 
+        # First try to find a move from the GM database (if available)
         if self.gm_name:
             pgn_file = './game_data/pgn_games/' + self.gm_name
 
             if not os.path.exists(pgn_file):
                 pass
+            else:
+                print('PGN logic triggered')
+                # Use the current position to find a matching move in the database
+                position_key = self.bot.get_position_key(self.board, self.current_turn)
+                
+                # Debug output
+                print("Original position_key:", position_key)
+                
+                # Try all possible variations of the position key
+                if self.bot.move_database:
+                    # Print keys from database for comparison
+                    print("Database keys sample:", list(self.bot.move_database.keys())[:2])
+                    
+                    # Try direct lookup
+                    if position_key in self.bot.move_database:
+                        moves = self.bot.move_database[position_key]
+                    else:
+                        # Try finding matching keys by board state (ignoring castling/en-passant)
+                        board_str = ''.join(''.join(row) for row in self.board)
+                        matching_keys = [k for k in self.bot.move_database.keys() 
+                                        if k.startswith(board_str[:32]) or 
+                                          k.replace(' ', '1').startswith(position_key[:32])]
+                        
+                        if matching_keys:
+                            print(f"Found {len(matching_keys)} matching positions")
+                            # Use the first matching key
+                            position_key = matching_keys[0]
+                            moves = self.bot.move_database[position_key]
+                        else:
+                            moves = {}
+                    
+                    if moves:
+                        print('Moves found:', moves)
+                        best_move = max(moves.items(), key=lambda x: x[1])[0]
+                        # Convert the move notation to board coordinates
+                        move_coords = self.bot.parse_move_notation(best_move)
+                        if move_coords:
+                            print('Using move from database:', best_move)
+                            self.move_piece(move_coords[0], move_coords[1], bypass_validity=True)
+                            self.bot_has_moved = True
+                            add_event(self.session_id, 'bot_move_finish')
+                            print("Board after bot move from database:")
+                            self.print_board(self.board)
+                            
+                            winner = self.check_winner()
+                            if winner:
+                                self.winner = winner
+                                self.running = False
+                                add_event(self.session_id, 'end')
+                            return
 
-            # parse next move from pgn file, probably finding this that occured most times
-
+        # If no move was found in the database, use standard bot logic
         bot_move = self.bot.get_move(self.board, self.current_turn)
         if bot_move is None:
             self.resign()
             return
 
-
-        print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
         self.bot_has_moved = True
         add_event(self.session_id, 'bot_move_finish')
-        print("Board after bot move:")
-        self.print_board(self.board)
 
         winner = self.check_winner()
         if winner:

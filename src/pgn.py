@@ -199,12 +199,14 @@ class PGNProcessor:
         position_key = self.get_position_key(game_state)
         self.move_database[position_key][(from_pos, to_pos)] += 1
 
-    def get_position_key(self, game_state):
-        """Generate unique position key"""
-        board_str = "".join("".join(row) for row in game_state["board"])
-        castling = "".join(k for k, v in game_state["castling"].items() if v)
-        ep = game_state["en_passant"] or "-"
-        return f"{board_str}{game_state['turn'][0]}{castling}{ep}"
+    def get_position_key(self, board, current_turn):
+        """Generate position key matching PGN processor's format"""
+        pieces = []
+        for row in board:
+            for piece in row:
+                pieces.append(piece if piece != ' ' else '1')  # PGN uses '1' for empty
+        color = 'w' if current_turn == "Biały" else 'b'
+        return ''.join(pieces) + color 
 
     def apply_move(self, game_state, from_pos, to_pos, promotion):
         """Update game state after move"""
