@@ -243,54 +243,88 @@ def order_moves(board, moves, current_turn, maximizing):
         return score
     return sorted(moves, key=move_score, reverse=maximizing)
 
-
 class ChessBot:
     def __init__(self, bot_color="Czarny", search_depth=4, move_database=None):
         self.bot_color = bot_color
         self.search_depth = search_depth
         self.move_database = move_database
-        self.current_line = []  # For tracking game line
+        self.current_line = []  # Stores tuples of (position_key, count, move)
         self.next_moves = []    # For displaying possible continuations
 
+        # Initialize current_line with opening moves from the database
+        if self.move_database:
+            initial_board = [
+                ["r", "n", "b", "q", "k", "b", "n", "r"],
+                ["p", "p", "p", "p", "p", "p", "p", "p"],
+                [" "] * 8,
+                [" "] * 8,
+                [" "] * 8,
+                [" "] * 8,
+                ["P", "P", "P", "P", "P", "P", "P", "P"],
+                ["R", "N", "B", "Q", "K", "B", "N", "R"]
+            ]
+            initial_position_key = self.get_position_key(initial_board, "Biały")
+            if initial_position_key in self.move_database:
+                opening_moves = self.move_database[initial_position_key]
+                self.current_line = [
+                    (initial_position_key, count, self.parse_move_notation(move))
+                    for move, count in opening_moves.items()
+                ]
+                self.next_moves = sorted(self.current_line, key=lambda x: x[1], reverse=True)[:5]
+
+
     def get_position_key(self, board, current_turn):
-        """Generate position key matching PGN processor's format"""
-        pieces = []
-        for row in board:
-            for piece in row:
-                pieces.append(piece if piece != ' ' else '1')
-        color = 'w' if current_turn == "Biały" else 'b'
-        return ''.join(pieces) + color
+            """Generate position key matching PGN processor's simplified format (without castling/en passant)."""
+            pieces = []
+            for row in board:
+                for piece in row:
+                    pieces.append(piece if piece != ' ' else '1')
+            color = 'w' if current_turn == "Biały" else 'b'
+            return ''.join(pieces) + color
+
 
     def get_move(self, board, current_turn):
         if current_turn != self.bot_color:
-            print("It's not my turn!")
             return None
-        
-        # First try to use PGN database moves
+
+        # Try using move database
         if self.move_database:
-            print('dupa')
-            print(self.move_database)
             position_key = self.get_position_key(board, current_turn)
-            
-            # Check if we're following a known game line
+            # Check current_line for matching position
             if self.current_line:
-                next_moves = [m for m in self.current_line if m[0] == position_key]
-                if next_moves:
-                    best_move = max(next_moves, key=lambda x: x[1])[2]
+                matching_moves = [m for m in self.current_line if m[0] == position_key]
+                if matching_moves:
+                    best_move = max(matching_moves, key=lambda x: x[1])[2]
                     self.current_line = [m for m in self.current_line if m[0] == position_key]
                     self.next_moves = self.current_line[:5]
                     return best_move
 
-            # Find new position in database
+            # Fetch new moves from database
             possible_moves = self.move_database.get(position_key, {})
             if possible_moves:
-                best_move = max(possible_moves.items(), key=lambda x: x[1])[0]
-                self.current_line = list(possible_moves.keys())
-                self.next_moves = self.current_line[:5]
-                return best_move
+                structured_moves = [
+                    (position_key, count, self.parse_move_notation(move))
+                    for move, count in possible_moves.items()
+                ]
+                self.current_line = structured_moves
+                self.next_moves = sorted(structured_moves, key=lambda x: x[1], reverse=True)[:5]
+                best = max(possible_moves.items(), key=lambda x: x[1])[0]
+                return self.parse_move_notation(best)
 
-        # Fallback to standard bot logic
+        # Fallback to minimax
         return self.get_standard_move(board, current_turn)
+
+    def parse_move_notation(self, move_notation):
+        """Convert SAN-like move (e2e4) to board coordinates."""
+        if len(move_notation) < 4:
+            return None
+        from_sq = move_notation[:2]
+        to_sq = move_notation[2:4]
+        from_row = 8 - int(from_sq[1])
+        from_col = ord(from_sq[0]) - ord('a')
+        to_row = 8 - int(to_sq[1])
+        to_col = ord(to_sq[0]) - ord('a')
+        return ((from_row, from_col), (to_row, to_col))
     
     def get_standard_move(self, board, current_turn):
         maximizing = (self.bot_color == "Biały")

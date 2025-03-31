@@ -357,6 +357,7 @@ class Mode:
         ex, ey = end
         piece = self.board[sx][sy]
         board_copy = copy.deepcopy(self.board)
+
         print('Moving piece:', piece, 'from', start, 'to', end)
 
         if not bypass_validity and not self.is_valid_move(start, end):
@@ -505,6 +506,7 @@ class Mode:
         if bot_move is None:
             self.resign()
             return
+        
 
         print('perform bot move 391')
         self.move_piece(bot_move[0], bot_move[1], bypass_validity=True)
@@ -620,7 +622,6 @@ class GMMode(Mode):
 
         print("Move database:", self.move_database)
 
-        # Initialize bot with move database
         self.bot = ChessBot(bot_color=self.bot_color,
                           search_depth=2,
                           move_database=self.move_database)

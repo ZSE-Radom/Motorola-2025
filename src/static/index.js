@@ -100,6 +100,7 @@ function renderSetup(game_type) {
 
                         fetch('/createOnlineGame', {
                             method: 'POST',
+                            data: JSON.stringify({ setupOptions }),
                             headers: { 'Content-Type': 'application/json' },
                         }).then(res => res.json())
                         .then(data => {
