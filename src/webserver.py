@@ -3,14 +3,11 @@ from modes import ClassicMode, BlitzMode, X960Mode, GMMode
 from flask_cors import CORS
 import os
 from utils import get_events
-import logging
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 app.secret_key = os.urandom(12).hex()
 
-log = logging.getLogger("werkzeug")
-log.disabled = True
 # Store game modes and sessions
 modes_store = {}
 available_modes = {
@@ -357,7 +354,6 @@ online_games = {}
 
 @app.route('/createOnlineGame', methods=['POST'])
 def create_online_game():
-    try:
         data = request.json
         mode_name = data.get('game_mode', 'classic')
 
@@ -409,8 +405,6 @@ def create_online_game():
             'board': mode_instance.board,
             'current_turn': mode_instance.current_turn
         })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/canGameStart', methods=['GET'])
 def can_game_start():
@@ -419,7 +413,12 @@ def can_game_start():
         if not session_id or session_id not in online_games:
             return jsonify({'status': 'waiting', 'message': 'Game not found'})
 
-        game = online_games.get(session_id)
+        game = None
+        for game_id, g in online_games.items():
+            if g['player1'] == session_id or g['player2'] == session_id:
+                game = g
+                break
+
         if game.get('player1') is None or game.get('player2') is None:
             return jsonify({'status': 'waiting', 'message': 'Waiting for opponent'})
 
