@@ -196,7 +196,7 @@ class PGNProcessor:
 
     def record_move(self, game_state, from_pos, to_pos):
         """Update move database"""
-        position_key = self.get_position_key(game_state)
+        position_key = self.get_position_key(game_state, "Czarny")
         self.move_database[position_key][(from_pos, to_pos)] += 1
 
     def get_position_key(self, board, current_turn):
@@ -206,7 +206,7 @@ class PGNProcessor:
             for piece in row:
                 pieces.append(piece if piece != ' ' else '1')  # PGN uses '1' for empty
         color = 'w' if current_turn == "Biały" else 'b'
-        return ''.join(pieces) + color 
+        return ''.join(pieces) + color
 
     def apply_move(self, game_state, from_pos, to_pos, promotion):
         """Update game state after move"""

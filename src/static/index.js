@@ -737,6 +737,7 @@ function highlightValidMoves(moves, posx, posy) {
     const validMoves = document.getElementsByClassName('validMove');
     while (validMoves.length) {
         validMoves[0].classList.remove('validMove');
+        validMoves[0].onclick = null;
     }
 
     if (!moves?.length) return;
@@ -744,7 +745,7 @@ function highlightValidMoves(moves, posx, posy) {
     moves.forEach(([newPosx, newPosy]) => {
         const targetSquare = document.getElementById(newPosx * 8 + newPosy);
         targetSquare.classList.add('validMove');
-        targetSquare.addEventListener('click', () => executeMove(posx, posy, newPosx, newPosy), { once: true });
+        targetSquare.onclick = function () {executeMove(posx, posy, newPosx, newPosy)}
     });
 }
 

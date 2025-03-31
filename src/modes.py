@@ -268,12 +268,10 @@ class Mode:
         return is_checked
 
     def show_check_warning(self):
-        print('Szach!')
         add_event(self.session_id, 'check')
 
     def prompt_promotion(self):
         if self.one_player and self.current_turn == self.bot_color:
-            print(self.current_turn, self.bot_color)
             self.promotion("Q")
             return
         add_event(self.session_id, 'promotion')
@@ -318,7 +316,8 @@ class Mode:
             self.perform_bot_move()
 
 
-    def is_valid_move(self, start, end):
+    def is_valid_move(self, piece, start, end):
+        print(self.valid_moves)
         if not self.valid_moves:
             return False
         return (end[0], end[1]) in self.valid_moves
@@ -357,10 +356,11 @@ class Mode:
         ex, ey = end
         piece = self.board[sx][sy]
         board_copy = copy.deepcopy(self.board)
+        self.highlight_moves(sx, sy, 0, None)
 
-        print('Moving piece:', piece, 'from', start, 'to', end)
+        print(f'Turn: {self.current_turn}, Moving piece:', piece, 'from', start, 'to', end)
 
-        if not bypass_validity and not self.is_valid_move(start, end):
+        if not bypass_validity and not self.is_valid_move(piece, start, end):
             print("Invalid move!")
             return
 
@@ -496,41 +496,37 @@ class Mode:
 
         # First try to find a move from the GM database (if available)
         if self.gm_name:
-            pgn_file = './game_data/pgn_games/' + self.gm_name
+            pgn_file = load_from_file('./game_data/pgn_games/' + self.gm_name)
 
             if not os.path.exists(pgn_file):
                 pass
             else:
-                print('PGN logic triggered')
                 # Use the current position to find a matching move in the database
                 position_key = self.bot.get_position_key(self.board, self.current_turn)
-                
-                # Debug output
-                print("Original position_key:", position_key)
-                
+
                 # Try all possible variations of the position key
                 if self.bot.move_database:
+                    print("Searching for moves in the database...")
                     # Print keys from database for comparison
-                    print("Database keys sample:", list(self.bot.move_database.keys())[:2])
-                    
                     # Try direct lookup
                     if position_key in self.bot.move_database:
                         moves = self.bot.move_database[position_key]
                     else:
                         # Try finding matching keys by board state (ignoring castling/en-passant)
-                        board_str = ''.join(''.join(row) for row in self.board)
-                        matching_keys = [k for k in self.bot.move_database.keys() 
-                                        if k.startswith(board_str[:32]) or 
-                                          k.replace(' ', '1').startswith(position_key[:32])]
-                        
+                        board_str = ''.join(''.join(row) for row in self.board).replace(' ', '1')
+                        matching_keys = [k for k in self.bot.move_database.keys()
+                                         if k.startswith(board_str[:32]) or
+                                         k.startswith(position_key[:32])]
+
+
                         if matching_keys:
-                            print(f"Found {len(matching_keys)} matching positions")
                             # Use the first matching key
                             position_key = matching_keys[0]
                             moves = self.bot.move_database[position_key]
                         else:
                             moves = {}
-                    
+                    print(f"Moves: {moves}")
+
                     if moves:
                         print('Moves found:', moves)
                         best_move = max(moves.items(), key=lambda x: x[1])[0]
@@ -543,7 +539,7 @@ class Mode:
                             add_event(self.session_id, 'bot_move_finish')
                             print("Board after bot move from database:")
                             self.print_board(self.board)
-                            
+
                             winner = self.check_winner()
                             if winner:
                                 self.winner = winner
@@ -661,13 +657,10 @@ class GMMode(Mode):
         self.move_database = None
         self.gm_name = name
         if self.gm_name:
-            pgn_path = f'./game_data/pgn_games/{self.gm_name}'
-            pgn_path = load_from_file(pgn_path)
+            pgn_path = load_from_file(f'./game_data/pgn_games/{self.gm_name}')
             if os.path.exists(pgn_path):
                 self.pgn_processor.parse_pgn(pgn_path)
                 self.move_database = self.pgn_processor.move_database
-
-        print("Move database:", self.move_database)
 
         self.bot = ChessBot(bot_color=self.bot_color,
                           search_depth=2,

@@ -4,6 +4,10 @@ from flask_cors import CORS
 import os
 from utils import get_events
 
+import logging
+log = logging.getLogger('werkzeug')
+log.disabled = True
+
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 app.secret_key = os.urandom(12).hex()
