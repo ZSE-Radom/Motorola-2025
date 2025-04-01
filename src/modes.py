@@ -257,17 +257,16 @@ class Mode:
                     self.current_turn == "Czarny" and self.board[i][j].islower()):
                     self.highlight_moves(i, j, 0, None)
                     for move in self.valid_moves:
+                        board_copy = copy.deepcopy(self.board)
                         piece = self.board[i][j]
                         self.board[i][j] = " "
                         self.board[move[0]][move[1]] = piece
 
                         if not self.check_for_check():
-                            self.board[i][j] = piece
-                            self.board[move[0]][move[1]] = " "
+                            self.board = board_copy
                             return False
 
-                        self.board[i][j] = piece
-                        self.board[move[0]][move[1]] = " "
+                        self.board = board_copy
 
         return True
 
