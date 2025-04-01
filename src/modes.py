@@ -112,7 +112,7 @@ class Mode:
         if (self.current_turn == "Biały" and piece.islower() and checkflag == 0) or (self.current_turn == "Czarny" and piece.isupper() and checkflag == 0):
             return  # This piece doesn't belong to the current player
 
-        if self.one_player and self.current_turn == self.bot_color:
+        if self.one_player and self.current_turn == self.bot_color and checkflag != 2:
             return
 
         self.valid_moves = []
@@ -255,7 +255,7 @@ class Mode:
             for j in range(8):
                 if (self.current_turn == "Biały" and self.board[i][j].isupper()) or (
                     self.current_turn == "Czarny" and self.board[i][j].islower()):
-                    self.highlight_moves(i, j, 0, None)
+                    self.highlight_moves(i, j, 2, None)
                     for move in self.valid_moves:
                         board_copy = copy.deepcopy(self.board)
                         piece = self.board[i][j]
@@ -593,7 +593,7 @@ class Mode:
                         # Try finding matching keys by board state (ignoring castling/en-passant)
                         board_str = ''.join(''.join(row) for row in self.board).replace(' ', '1')
                         matching_keys = [k for k in self.bot.move_database.keys()
-                                                                if k.startswith(board_str)] 
+                                                                if k.startswith(board_str)]
 
                         print(board_str, matching_keys)
 
