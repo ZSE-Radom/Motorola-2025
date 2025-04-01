@@ -3,7 +3,7 @@ import threading
 import random
 import os
 from tabnanny import check
-
+from collections import defaultdict
 from utils import add_event, load_from_file
 from bot import ChessBot
 from pgn import PGNProcessor
@@ -30,6 +30,7 @@ class Mode:
         self.allow_for_revert = False
         self.gm_name = None
         self.bot_mode = 'easy'
+        self.positions = defaultdict(int)
 
         self.promotion_lock = False
         self.piece_to_promote = None
@@ -295,6 +296,37 @@ class Mode:
     def show_check_warning(self):
         add_event(self.session_id, 'check')
 
+    def board_to_fen(self, board):
+        fen_rows = []
+
+        for row in board:
+            fen_row = ""
+            empty_count = 0
+
+            for piece in row:
+                if piece == " ":
+                    empty_count += 1
+                else:
+                    if empty_count > 0:
+                        fen_row += str(empty_count)
+                        empty_count = 0
+                    fen_row += piece
+
+            if empty_count > 0:
+                fen_row += str(empty_count)
+
+            fen_rows.append(fen_row)
+
+        return "/".join(fen_rows)
+
+    def add_position(self, board):
+        fen = self.board_to_fen(board)
+        self.positions[fen] += 1
+        return self.positions[fen]
+
+    def is_threefold_repetition(self, board):
+        return self.add_position(board) >= 3
+
     def prompt_promotion(self):
         if self.one_player and self.current_turn == self.bot_color:
             self.promotion("Q")
@@ -468,6 +500,10 @@ class Mode:
             add_event(self.session_id, 'draw')
             self.running = False
 
+        if self.is_threefold_repetition(self.board):
+            add_event(self.session_id, 'draw')
+            self.running = False
+
         self.check_winner()
 
         if self.one_player and self.current_turn == self.bot_color and self.running and not self.bot_has_moved:
@@ -543,10 +579,11 @@ class Mode:
                         # Try finding matching keys by board state (ignoring castling/en-passant)
                         board_str = ''.join(''.join(row) for row in self.board).replace(' ', '1')
                         matching_keys = [k for k in self.bot.move_database.keys()
-                                        if k.startswith(board_str)] 
-                        print(self.bot.move_database.keys())
+                                         if k.startswith(board_str[:32]) or
+                                         k.startswith(position_key[:32])]
 
                         print(board_str, matching_keys)
+
 
                         if matching_keys:
                             # Use the first matching key
