@@ -1041,6 +1041,8 @@ function animateChessBoard(type) {
     if (type === 'game') {
         document.getElementById('chessSocial').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessStats').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
+        document.getElementById('chessSocial').style.display = 'block';
+        document.getElementById('chessStats').style.display = 'block';
     } else if (type === 'setup') {
         document.getElementById('chessSetupHuman').style.animation = "slideup-center 3s cubic-bezier(0.075, 0.82, 0.165, 1)";
         document.getElementById('chessBoard').style.animation = "slideup-center 2s cubic-bezier(0.075, 0.82, 0.165, 1)";
@@ -1154,6 +1156,17 @@ fetch('/static/changelog_bar')
 if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.getElementById('darkmode').checked = true;
     document.body.classList.add('dark');
+}
+
+function exit() {
+    document.getElementById('exitscreen').style.display = 'block';
+    document.getElementById('exitscreen').animate([
+        { transform: 'translateY(-100%)' },
+        { transform: 'translateY(0)' }
+    ], {
+        duration: 1000,
+        easing: 'ease-in-out'
+    });
 }
 
 let current_player = 1;

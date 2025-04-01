@@ -543,11 +543,10 @@ class Mode:
                         # Try finding matching keys by board state (ignoring castling/en-passant)
                         board_str = ''.join(''.join(row) for row in self.board).replace(' ', '1')
                         matching_keys = [k for k in self.bot.move_database.keys()
-                                         if k.startswith(board_str[:32]) or
-                                         k.startswith(position_key[:32])]
+                                        if k.startswith(board_str)] 
+                        print(self.bot.move_database.keys())
 
                         print(board_str, matching_keys)
-
 
                         if matching_keys:
                             # Use the first matching key

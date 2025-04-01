@@ -74,7 +74,7 @@
         </div>
         <div id="bottomButtons">
             <button id="settings_entry" onclick="document.getElementById('settings').style.display = 'block'">USTAWIENIA</button>
-            <button id="exit">WYJŚCIE</button>
+            <button id="exit" onclick="exit()">WYJŚCIE</button>
         </div>
     </div>
     <div id="chessGame">
@@ -260,6 +260,9 @@
         </div>
         <div id="loinfo">Wczytuję...</div>
     </div>
+    <div id="exitscreen">
+        <div id="exbar">Teraz możesz bezpiecznie zamknąć kartę w przeglądarce.</div>
+    </div>
     <div id="settings">
         <div style="display: flex; font-size: 2rem; font-weight: 800;">
             <div id="title_settings">USTAWIENIA GRY</div>
@@ -276,12 +279,12 @@
         <div class="settingbox">
             <p>Tryb ciemny</p>
             <label class="setright" class="switch">
-                <input type="checkbox" id="darkmode">
+                <input class="xcheckbox" type="checkbox" id="darkmode">
             </label>
         </div>
         <div class="settingbox">
             <p>Otwórz ponownie konfigurator</p>
-            <button class="setright" id="reinit" onclick="document.getElementById('init').style.display='block';">Otwórz</button>
+            <button class="setright xbutton" id="reinit" onclick="document.getElementById('init').style.display='block';">Otwórz</button>
         </div>
     </div>
     <div id="init">
@@ -293,17 +296,17 @@
         <div id="profileEdit">
             <div id="profileEditPfp">
                 <div class="player-select">
-                    <div onclick="prevPfp(this)">⏮️</div><img id="myPfp1" class="prpr" src=""><div onclick="nextPfp(this)">⏭️</div>
-                    <div>
-                        <div>Nazwa osoby nr. 1</div>
-                        <input type="text" id="profileEditNameInput1" placeholder="Patyna">
+                    <img id="myPfp1" class="prpr" src=""><div class="nextBtn" onclick="nextPfp(this)">⏭️</div>
+                    <div class="playerFlex">
+                        <div style="height: 30%;">Nazwa osoby nr. 1</div>
+                        <input class="profileEditNameInput" type="text" id="profileEditNameInput1" placeholder="Patyna">
                     </div>
                 </div>
                 <div class="player-select">
-                    <div onclick="prevPfp(this)">⏮️</div><img id="myPfp2" class="prpr" src=""><div onclick="nextPfp(this)">⏭️</div>
+                    <img id="myPfp2" class="prpr" src=""><div class="nextBtn" onclick="nextPfp(this)">⏭️</div>
                     <div>
-                        <div>Nazwa osoby nr. 2</div>
-                        <input type="text" id="profileEditNameInput2" placeholder="MinerPL">
+                        <div style="height: 30%;">Nazwa osoby nr. 2</div>
+                        <input class="profileEditNameInput" type="text" id="profileEditNameInput2" placeholder="MinerPL">
                     </div>
                 </div>
             </div>

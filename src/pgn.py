@@ -48,7 +48,7 @@ class PGNProcessor:
             "board": self.create_initial_board(),
             "castling": {"K": True, "Q": True, "k": True, "q": True},
             "en_passant": None,
-            "turn": "white"
+            "turn": "Biały"
         }
 
     def create_initial_board(self):
@@ -108,9 +108,9 @@ class PGNProcessor:
             for y in range(8):
                 piece = game_state["board"][x][y]
                 if piece.upper() == piece_type.upper():
-                    if game_state["turn"] == "white" and piece.isupper():
+                    if game_state["turn"] == "Biały" and piece.isupper():
                         candidates.append((x, y))
-                    elif game_state["turn"] == "black" and piece.islower():
+                    elif game_state["turn"] == "Czarny" and piece.islower():
                         candidates.append((x, y))
 
         # Filter by file/rank disambiguation
@@ -124,7 +124,7 @@ class PGNProcessor:
             moves = self.generate_moves(game_state, candidate)
             if to_pos in moves:
                 promotion = groups["promotion"][1].upper() if groups["promotion"] else None
-                if game_state["turn"] == "black" and promotion:
+                if game_state["turn"] == "Czarny" and promotion:
                     promotion = promotion.lower()
                 return candidate, to_pos, promotion
 
@@ -132,7 +132,7 @@ class PGNProcessor:
 
     def parse_castling(self, san, game_state):
         """Handle castling moves"""
-        row = 7 if game_state["turn"] == "white" else 0
+        row = 7 if game_state["turn"] == "Biały" else 0
         king_pos = (row, 4)
 
         if "O-O-O" in san:
@@ -196,18 +196,21 @@ class PGNProcessor:
 
     def record_move(self, game_state, from_pos, to_pos):
         """Update move database"""
-        position_key = self.get_position_key(game_state, "Czarny")
+        # Pass parameters correctly
+        position_key = self.get_position_key(
+            game_state["board"], 
+            game_state["turn"]
+        )
         self.move_database[position_key][(from_pos, to_pos)] += 1
 
     def get_position_key(self, board, current_turn):
-        """Generate position key matching PGN processor's format"""
         pieces = []
         for row in board:
             for piece in row:
-                pieces.append(piece if piece != ' ' else '1')  # PGN uses '1' for empty
+                pieces.append(piece if piece != ' ' else '1')
         color = 'w' if current_turn == "Biały" else 'b'
         return ''.join(pieces) + color
-
+    
     def apply_move(self, game_state, from_pos, to_pos, promotion):
         """Update game state after move"""
         x1, y1 = from_pos
@@ -242,7 +245,7 @@ class PGNProcessor:
             game_state["en_passant"] = None
 
         # Switch turns
-        game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
+        game_state["turn"] = "Czarny" if game_state["turn"] == "Biały" else "Biały"
 
     @staticmethod
     def notation_to_coords(notation):
