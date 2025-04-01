@@ -31,7 +31,9 @@ class Mode:
         self.gm_name = None
         self.bot_mode = 'easy'
         self.positions = defaultdict(int)
-        self.notation = 'classic'
+        self.move_notation_type_display = 'classic'
+        self.move_notation_to_display = []
+        self.move_history_to_display = []
 
         self.promotion_lock = False
         self.piece_to_promote = None
@@ -77,7 +79,10 @@ class Mode:
         return chr(col + ord('a')) + str(8 - row)
 
     def get_move_notation(self, piece, start, end):
-        if self.notation == 'classic':
+        return piece + self.coord_to_notation(start) + self.coord_to_notation(end)
+
+    def get_move_notation_for_display(self, piece, start, end):
+        if self.move_notation_type_display == 'classic':
             piece_symbol = '' if piece.lower() == 'p' else piece.upper()
             capture = 'x' if self.board[end[0]][end[1]] != ' ' else ''
             return f"{piece_symbol}{self.coord_to_notation(end)}{capture}"
@@ -491,6 +496,10 @@ class Mode:
         move_notation = self.get_move_notation(piece, start, end)
         self.move_history.append(move_notation)
         self.last_move = (piece, start, end)
+
+        move_notation_for_display = self.get_move_notation_for_display(piece, start, end)
+        self.move_notation_to_display.append(move_notation_for_display)
+        self.move_history_to_display.append(move_notation_for_display)
 
         if self.promotion_lock:
             return

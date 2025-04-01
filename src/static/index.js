@@ -9,6 +9,7 @@ let editMode = false;
 let pfpsrclist = ['/static/profiles/1.png', '/static/profiles/2.png', '/static/profiles/3.png', '/static/profiles/4.png', '/static/profiles/5.png', '/static/profiles/6.png', '/static/profiles/7.png', '/static/profiles/8.png', '/static/profiles/9.png', '/static/profiles/10.png', '/static/profiles/11.png', '/static/profiles/12.png', '/static/profiles/a_8f428c9540cd76b2a6d8a727db98cee7.png', '/static/profiles/8715642fbbded8333534042f40a2a3e4.png']
 let rInterval = null;
 let currentPlayer = null;
+let currentNotation = 'classic';
 
 function getCustomBoardData() {
     const boardData = [];
@@ -710,10 +711,22 @@ function handleDragEnd(event) {
         movedPiece = null;
     }
 }
-
 function updateTimers(time) {
-    document.getElementById('chessTimer1').textContent = time['Biały'];
-    document.getElementById('chessTimer2').textContent = time['Czarny'];
+    // Format time as MM:SS
+    const formatTime = (timeStr) => {
+        const totalSeconds = parseInt(timeStr);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+    
+    document.getElementById('chessTimer1').textContent = formatTime(time['Biały']);
+    document.getElementById('chessTimer2').textContent = formatTime(time['Czarny']);
+}
+
+function toggleNotation() {
+    currentNotation = currentNotation === 'classic' ? 'long' : 'classic';
+    refreshTimer();
 }
 
 function handleSquareClick(posx, posy) {
@@ -778,7 +791,7 @@ function executeMove(posx, posy, newPosx, newPosy) {
 }
 
 function refreshTimer() {
-    fetch('/stats')
+    fetch(`/stats?notation_type=${currentNotation}`)
       .then(res => res.json())
       .then(data => {
         if (data.error) {

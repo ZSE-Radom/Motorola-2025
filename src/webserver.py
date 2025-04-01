@@ -143,50 +143,36 @@ def join_online():
 @app.route('/stats')
 def get_stats():
     session_id = session.get('session_id')
+    notation_type = request.args.get('notation_type', 'classic')
+
+    if notation_type not in ['classic', 'long']:
+        return jsonify({'error': 'Invalid notation type'}), 400
+    
     if not session_id or session_id not in modes_store:
         return jsonify({'error': 'Game session not found'}), 400
 
     mode_instance = modes_store[session_id]
+
+    mode_instance.move_notation_type_display = notation_type
     stats = {
             'board': mode_instance.board,
             'timer': mode_instance.timer,
             'current_turn': mode_instance.current_turn,
             'running': mode_instance.running,
             'winner': mode_instance.winner,
-            'history': mode_instance.move_history,
+            'history': mode_instance.move_history_to_display,
             'events': get_events(session_id)
         }
 
     if mode_instance.one_player and mode_instance.bot:
-        evaluation, metrics = mode_instance.bot.evaluate_board(mode_instance.board)
         stats.update({
             'evaluation': mode_instance.bot.last_evaluation,
             'search_depth': mode_instance.bot.search_depth,
-            'nodes_evaluated': mode_instance.bot.nodes_evaluated,
-            'bot_suggestions': mode_instance.bot.get_next_moves_suggestion()
+            'nodes': mode_instance.bot.nodes_evaluated,
+            #'bot_suggestions': mode_instance.bot.get_next_moves_suggestion()
         })
-    
+
     return jsonify(stats)
-
-@app.route('/stats', methods=['GET'])
-def stats():
-    try:
-        session_id = session.get('session_id')
-        if not session_id or session_id not in modes_store:
-            return jsonify({'error': 'Game session not found'}), 400
-
-        mode_instance = modes_store[session_id]
-        return jsonify({
-            'board': mode_instance.board,
-            'timer': mode_instance.timer,
-            'current_turn': mode_instance.current_turn,
-            'running': mode_instance.running,
-            'winner': mode_instance.winner,
-            'history': mode_instance.move_history,
-            'events': get_events(session_id)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/move', methods=['POST'])

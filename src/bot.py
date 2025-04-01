@@ -250,6 +250,8 @@ class ChessBot:
         self.move_database = move_database
         self.current_line = []  # Stores tuples of (position_key, count, move)
         self.next_moves = []    # For displaying possible continuations
+        self.last_evaluation = 0.0
+        self.nodes_evaluated = 0  
 
         # Initialize current_line with opening moves from the database
         if self.move_database:
@@ -286,6 +288,8 @@ class ChessBot:
     def get_move(self, board, current_turn):
         if current_turn != self.bot_color:
             return None
+        
+        self.nodes_evaluated = 0 
 
         # Try using move database
         if self.move_database:
@@ -295,6 +299,8 @@ class ChessBot:
                 matching_moves = [m for m in self.current_line if m[0] == position_key]
                 if matching_moves:
                     best_move = max(matching_moves, key=lambda x: x[1])[2]
+                    if best_move:
+                        self.last_evaluation = evaluate_board(make_move(board, best_move))
                     self.current_line = [m for m in self.current_line if m[0] == position_key]
                     self.next_moves = self.current_line[:5]
                     return best_move
@@ -337,11 +343,14 @@ class ChessBot:
         return best_move
 
     def minimax(self, board, depth, alpha, beta, maximizing, current_turn):
+        self.nodes_evaluated += 1
         moves = generate_all_legal_moves(board, current_turn)
         moves = order_moves(board, moves, current_turn, maximizing)
         
         if depth == 0 or not moves:
-            return evaluate_board(board), None
+            eval_score = evaluate_board(board)
+            self.last_evaluation = eval_score
+            return eval_score, None
         
         best_move = None
         if maximizing:
@@ -381,7 +390,7 @@ class ChessBot:
         row, col = coord
         return chr(col + ord('a')) + str(8 - row)
     
-    def evaluate_board(board):
+    def evaluate_board(self, board):
         score = 0
         metrics = {
             'material': 0,
