@@ -558,11 +558,9 @@ class Mode:
 
                     if moves:
                         print('Moves found:', moves)
-                        best_move = max(moves.items(), key=lambda x: x[1])[0]
-                        # Convert the move notation to board coordinates
-                        move_coords = self.bot.parse_move_notation(best_move)
+                        best_move_tuple = max(moves.items(), key=lambda x: x[1])[0]
+                        move_coords = best_move_tuple
                         if move_coords:
-                            print('Using move from database:', best_move)
                             self.move_piece(move_coords[0], move_coords[1], bypass_validity=True)
                             self.bot_has_moved = True
                             add_event(self.session_id, 'bot_move_finish')
