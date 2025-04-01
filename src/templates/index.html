@@ -227,22 +227,24 @@
                 <h3>Obecnie gra</h3>
                 <div id="chessTurn"></div>
             </div>
-            <div id="chessMistakesStat">
-                <h3>Błędy</h3>
-                <div id="chessMistakes"></div>
+            <div id="chessEvalStat">
+                <h3>Ocena partii</h3>
+                <div id="chessEval"></div>
             </div>
-            <div id="chessPrecipitatesStat">
-                <h3>Strącenia</h3>
-                <div id="chessPrecipitates"></div>
+            <div id="chessDepthStat">
+                <h3>Głębokość szukania (Bot)</h3>
+                <div id="chessDepth"></div>
+            </div>
+            <div id="chessNodeStat">
+                <h3>Przeszukanych węzłów (Bot)</h3>
+                <div id="chessNode"></div>
             </div>
             <div id="chessLogStat">
                 <h3>Log</h3>
                 <div id="chessLog"></div>
             </div>
             <div id="chessButtonsStat">
-                <button id="chessDownloadHistory"></button>
-                <button id="chessDownloadLog"></button>
-                <button id="chessNerdView"></button>
+                <button id="chessNotationSwitch" onclick="toggleNotation()">Zmień notację</button>
             </div>
         </div>
     </div>

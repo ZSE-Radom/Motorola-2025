@@ -810,7 +810,9 @@ function refreshTimer() {
             updateTimers(data.timer);
             animateChessBoard('game');
           }
-
+            document.getElementById('chessEval').innerHTML = data.evaluation !== undefined ? parseFloat(data.evaluation).toFixed(2) : 'B/D';
+            document.getElementById('chessDepth').innerHTML = data.search_depth ?? 'B/D';
+            document.getElementById('chessNode').innerHTML = data.nodes ?? 'zero';
             currentPlayer = data.current_turn;
 
           if (!data.events) {
@@ -866,7 +868,7 @@ function refreshTimer() {
                     createPopUp('info', 'Zdarzenie', event);
             }
         }
-          document.getElementById('chessLog').innerHTML = data.history;
+          document.getElementById('chessLog').innerHTML = data.history ? data.history.join(' ') : '';
           document.getElementById('chessTurn').textContent = 'Tura: ' + data.current_turn;
         }
       });

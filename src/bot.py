@@ -290,7 +290,7 @@ class ChessBot:
             return None
         
         self.nodes_evaluated = 0 
-
+        
         # Try using move database
         if self.move_database:
             position_key = self.get_position_key(board, current_turn)
