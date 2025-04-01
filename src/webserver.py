@@ -140,6 +140,34 @@ def join_online():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/stats')
+def get_stats():
+    session_id = session.get('session_id')
+    if not session_id or session_id not in modes_store:
+        return jsonify({'error': 'Game session not found'}), 400
+
+    mode_instance = modes_store[session_id]
+    stats = {
+            'board': mode_instance.board,
+            'timer': mode_instance.timer,
+            'current_turn': mode_instance.current_turn,
+            'running': mode_instance.running,
+            'winner': mode_instance.winner,
+            'history': mode_instance.move_history,
+            'events': get_events(session_id)
+        }
+
+    if mode_instance.one_player and mode_instance.bot:
+        evaluation, metrics = mode_instance.bot.evaluate_board(mode_instance.board)
+        stats.update({
+            'evaluation': mode_instance.bot.last_evaluation,
+            'search_depth': mode_instance.bot.search_depth,
+            'nodes_evaluated': mode_instance.bot.nodes_evaluated,
+            'bot_suggestions': mode_instance.bot.get_next_moves_suggestion()
+        })
+    
+    return jsonify(stats)
+
 @app.route('/stats', methods=['GET'])
 def stats():
     try:

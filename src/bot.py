@@ -380,6 +380,45 @@ class ChessBot:
         """Convert board coordinates to chess notation"""
         row, col = coord
         return chr(col + ord('a')) + str(8 - row)
+    
+    def evaluate_board(board):
+        score = 0
+        metrics = {
+            'material': 0,
+            'positional': 0,
+            'mobility': 0,
+            'center_control': 0
+        }
+
+        for x in range(8):
+            for y in range(8):
+                piece = board[x][y]
+                if piece == " ": continue
+                
+                value = PIECE_VALUES.get(piece, 0)
+                metrics['material'] += value if piece.isupper() else -value
+
+                # Ocena pozycyjna
+                if piece == 'P': metrics['positional'] += PAWN_TABLE[x][y]
+                elif piece == 'p': metrics['positional'] -= PAWN_TABLE[7-x][y]
+                elif piece == 'N': metrics['positional'] += KNIGHT_TABLE[x][y]
+                elif piece == 'n': metrics['positional'] -= KNIGHT_TABLE[7-x][y]
+
+                # Mobilność
+                moves = generate_piece_moves(board, x, y)
+                mobility = len(moves) * 0.1
+                if piece.isupper():
+                    metrics['mobility'] += mobility
+                else:
+                    metrics['mobility'] -= mobility
+
+                # Kontrola centrum
+                if (x, y) in CENTER_SQUARES:
+                    control = 0.15 if piece.isupper() else -0.15
+                    metrics['center_control'] += control
+
+        total = sum(metrics.values())
+        return total, metrics
 
 if __name__ == "__main__":
     board = [

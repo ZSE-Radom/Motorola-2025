@@ -31,6 +31,7 @@ class Mode:
         self.gm_name = None
         self.bot_mode = 'easy'
         self.positions = defaultdict(int)
+        self.notation = 'classic'
 
         self.promotion_lock = False
         self.piece_to_promote = None
@@ -76,8 +77,13 @@ class Mode:
         return chr(col + ord('a')) + str(8 - row)
 
     def get_move_notation(self, piece, start, end):
-        # Produces long algebraic notation (e.g. "Pe2e4" or "Ke1g1" for castling)
-        return piece + self.coord_to_notation(start) + self.coord_to_notation(end)
+        if self.notation == 'classic':
+            piece_symbol = '' if piece.lower() == 'p' else piece.upper()
+            capture = 'x' if self.board[end[0]][end[1]] != ' ' else ''
+            return f"{piece_symbol}{self.coord_to_notation(end)}{capture}"
+        else:
+            # Długa notacja algebraiczna
+            return f"{piece.upper()}{self.coord_to_notation(start)}{self.coord_to_notation(end)}"
 
     def set_board(self, custom_board):
         """Sets the board and validates its structure."""

@@ -1158,7 +1158,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.body.classList.add('dark');
 }
 
-function exit() {
+function exitGame() {
     document.getElementById('exitscreen').style.display = 'block';
     document.getElementById('exitscreen').animate([
         { transform: 'translateY(-100%)' },
