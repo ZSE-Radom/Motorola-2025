@@ -221,7 +221,7 @@ def evaluate_board(board):
                 value -= len(moves) * 0.1
             # Add center control bonus
             if (x, y) in CENTER_SQUARES:
-                value += 0.5 if piece.isupper() else -0.5
+                value += 0.15 if piece.isupper() else -0.15
             if piece.isupper():
                 score += value
             else:
@@ -370,7 +370,6 @@ class ChessBot:
                 if beta <= alpha:
                     break
             return min_eval, best_move
-        
 
     def get_next_moves_suggestion(self):
         """Return possible continuation moves for UI display"""
