@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentacja - Motorola Szachy♟️</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-left: 5px solid #3498db;
+            padding-left: 15px;
+            margin-top: 40px;
+        }
+        h3 {
+            margin-top: 30px;
+            color: #2980b9;
+        }
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.95em;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .endpoint {
+            background-color: #e8f4f8;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #d6e9f1;
+        }
+        .endpoint h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e6f7ff;
+        }
+        .diagram {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .component {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        .note {
+            background-color: #fffde7;
+            padding: 15px;
+            border-left: 4px solid #ffd600;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .warning {
+            background-color: #ffebee;
+            padding: 15px;
+            border-left: 4px solid #f44336;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .flow-chart {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .class-diagram {
+            font-family: monospace;
+            white-space: pre;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Dokumentacja - Motorola Szachy♟️</h1>
+    
+    <section class="component">
+        <h2>1. Ogólny opis projektu</h2>
+        <p>
+            Nasz cudowny projekt to kompleksowa aplikacja szachowa działająca w przeglądarce internetowej,
+            łącząca w sobie funkcjonalność gry offline przeciwko komputerowi oraz gry online
+            między dwoma graczami. System został zbudowany przy użyciu technologii:
+        </p>
+        <ul>
+            <li><strong>Backend:</strong> Python z frameworkiem Flask</li>
+            <li><strong>Frontend:</strong> HTML5, CSS3, JavaScript (ES6+)</li>
+            <li><strong>Komunikacja:</strong> REST API z formatem JSON</li>
+        </ul>
+        
+        <h3>1.1. Główne zalety naszych szachów</h3>
+        <ul>
+            <li><strong>Wielość trybów gry:</strong> klasyczny, błyskawiczny, Fischer Random (Chess960), gry mistrzów</li>
+            <li><strong>Gra z komputerem:</strong> 3 poziomy trudności AI</li>
+            <li><strong>Gra sieciowa:</strong> możliwość gry pomiędzy dwoma graczami online</li>
+            <li><strong>Niestandardowe ustawienia:</strong> możliwość definiowania własnych układów pionków</li>
+            <li><strong>Zaawansowane funkcje:</strong> cofanie ruchów, propozycje remisu, poddawanie się</li>
+            <li><strong>Interfejs użytkownika:</strong> animacje, dźwięki, ciemny motyw, personalizacja profilu</li>
+        </ul>
+        
+        <div class="note">
+            <strong>Uwaga:</strong> Projekt został zaprojektowany z myślą o responsywności,
+            ale obecnie najlepiej działa na komputerach stacjonarnych i laptopach.
+        </div>
+    </section>
+    
+    <section class="component">
+        <h2>2. Architektura systemu</h2>
+        
+        <div class="diagram">
+            <h3>2.1. Diagram architektury wysokopoziomowej</h3>
+            <pre>
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌──────────────┐
+│   Przegląd  │    │   Serwer    │    │   Logika    │    │   Baza danych│
+│   (Frontend)│◄──►│   Flask     │◄──►│   gry       │◄──►│   (PGN)      │
+└─────────────┘    └─────────────┘    └─────────────┘    └──────────────┘
+      ▲                  ▲                   ▲                 
+      │                  │                   │                 
+      ▼                  ▼                   ▼                 
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐          
+│   HTML/CSS/ │    │   REST API  │    │   Silnik    │          
+│ JavaScript  │    │   Endpoints │    │   szachowy  │          
+└─────────────┘    └─────────────┘    └─────────────┘          
+            </pre>
+        </div>
+        
+        <h3>2.2. Główne komponenty</h3>
+        
+        <h4>2.2.1. Frontend</h4>
+        <ul>
+            <li><strong>Interfejs użytkownika:</strong> Szachownica, panele informacyjne, przyciski sterujące</li>
+            <li><strong>Logika prezentacji:</strong> Animacje, wyświetlanie możliwych ruchów, aktualizacja stanu gry</li>
+            <li><strong>Komunikacja z backendem:</strong> Wysyłanie ruchów, odbieranie aktualizacji stanu gry</li>
+        </ul>
+        
+        <h4>2.2.2. Backend</h4>
+        <ul>
+            <li><strong>Serwer HTTP:</strong> Obsługa żądań od klientów</li>
+            <li><strong>API REST:</strong> Punkt końcowy dla wszystkich operacji gry</li>
+            <li><strong>Menadżer sesji:</strong> Śledzenie aktywnych gier i graczy</li>
+        </ul>
+        
+        <h4>2.2.3. Logika gry</h4>
+        <ul>
+            <li><strong>Tryby gry:</strong> Implementacja zasad dla różnych wariantów szachów</li>
+            <li><strong>Silnik szachowy:</strong> Walidacja ruchów, wykrywanie szachów, matów, patów</li>
+            <li><strong>AI:</strong> Implementacja komputerowego przeciwnika</li>
+            <li><strong>Przetwarzanie PGN:</strong> Analiza partii szachowych w formacie PGN</li>
+        </ul>
+        
+        <div class="flow-chart">
+            <h3>2.3. Przepływ danych w systemie</h3>
+            <pre>
+1. Klient inicjuje żądanie (np. wykonanie ruchu)
+2. Serwer Flask odbiera żądanie i przekazuje je do odpowiedniego handlera
+3. Handler modyfikuje stan gry i przygotowuje odpowiedź
+4. Serwer wysyła odpowiedź z powrotem do klienta
+5. Klient aktualizuje interfejs użytkownika na podstawie odpowiedzi
+            </pre>
+        </div>
+    </section>
+    
+    <section class="component">
+        <h2>3. Szczegółowa dokumentacja backendu</h2>
+        
+        <h3>3.1. Struktura plików</h3>
+        <ul>
+            <li><code>webserver.py</code> - Główny plik aplikacji Flask</li>
+            <li><code>modes.py</code> - Implementacje różnych trybów gry</li>
+            <li><code>bot.py</code> - Implementacja sztucznej inteligencji</li>
+            <li><code>pgn.py</code> - Przetwarzanie plików PGN</li>
+            <li><code>utils.py</code> - Narzędzia pomocnicze</li>
+        </ul>
+        
+        <h3>3.2. Klasy główne</h3>
+        
+        <div class="class-diagram">
+            <h4>3.2.1. Diagram klas trybów gry</h4>
+            <pre>
+class Mode:
+    ├── initialize_board()
+    ├── move_piece()
+    ├── highlight_moves()
+    ├── check_checkmate()
+    ├── check_for_check()
+    ├── promotion()
+    └── ...
+    |
+    ├── ClassicMode (Mode)
+    ├── BlitzMode (Mode)
+    ├── X960Mode (Mode)
+    └── GMMode (Mode)
+            </pre>
+        </div>
+        
+        <div class="class-diagram">
+            <h4>3.2.2. Diagram klasy ChessBot</h4>
+            <pre>
+class ChessBot:
+    ├── get_move()
+    ├── minimax()
+    ├── evaluate_board()
+    ├── generate_piece_moves()
+    ├── is_in_check()
+    └── ...
+            </pre>
+        </div>
+        
+        <h3>3.3. Endpointy API</h3>
+        
+        <div class="endpoint">
+            <h3>POST /startOffline</h3>
+            <p>Rozpoczyna nową grę offline przeciwko komputerowi lub drugiemu graczowi lokalnemu.</p>
+            
+            <h4>Parametry żądania:</h4>
+            <table>
+                <tr>
+                    <th>Parametr</th>
+                    <th>Typ</th>
+                    <th>Wymagane</th>
+                    <th>Opis</th>
+                </tr>
+                <tr>
+                    <td>game_mode</td>
+                    <td>string</td>
+                    <td>Tak</td>
+                    <td>Tryb gry ('classic', 'blitz', '960')</td>
+                </tr>
+                <tr>
+                    <td>one_player</td>
+                    <td>boolean</td>
+                    <td>Nie</td>
+                    <td>Czy gra przeciwko komputerowi (domyślnie false)</td>
+                </tr>
+                <tr>
+                    <td>human_color</td>
+                    <td>string</td>
+                    <td>Nie</td>
+                    <td>Kolor gracza ('Biały' lub 'Czarny', domyślnie 'Biały')</td>
+                </tr>
+                <tr>
+                    <td>custom_board</td>
+                    <td>array</td>
+                    <td>Nie</td>
+                    <td>Niestandardowa konfiguracja szachownicy (8x8)</td>
+                </tr>
+                <tr>
+                    <td>allow_for_revert</td>
+                    <td>boolean</td>
+                    <td>Nie</td>
+                    <td>Czy zezwolić na cofanie ruchów (domyślnie true)</td>
+                </tr>
+                <tr>
+                    <td>bot_mode</td>
+                    <td>string</td>
+                    <td>Nie</td>
+                    <td>Poziom trudności AI ('easy', 'medium', 'hard')</td>
+                </tr>
+            </table>
+            
+            <h4>Przykładowa odpowiedź:</h4>
+            <pre>{
+    "board": [
+        ["r","n","b","q","k","b","n","r"],
+        ["p","p","p","p","p","p","p","p"],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        ["P","P","P","P","P","P","P","P"],
+        ["R","N","B","Q","K","B","N","R"]
+    ],
+    "timer": {
+        "Biały": 6000,
+        "Czarny": 6000
+    },
+    "current_turn": "Biały",
+    "running": true,
+    "winner": null,
+    "game_type": "offline",
+    "game_mode": "Klasyczny",
+    "first_player_name": "Gracz1",
+    "second_player_name": "Gracz2"
+}</pre>
+        </div>
+        
+        <div class="endpoint">
+            <h3>POST /move</h3>
+            <p>Wykonuje ruch w aktualnej grze.</p>
+            
+            <h4>Parametry żądania:</h4>
+            <table>
+                <tr>
+                    <th>Parametr</th>
+                    <th>Typ</th>
+                    <th>Wymagane</th>
+                    <th>Opis</th>
+                </tr>
+                <tr>
+                    <td>move</td>
+                    <td>array</td>
+                    <td>Tak</td>
+                    <td>Współrzędne ruchu [x_pocz, y_pocz, x_kon, y_kon]</td>
+                </tr>
+            </table>
+            
+            <h4>Przykładowa odpowiedź:</h4>
+            <pre>{
+    "board": [ ... ],
+    "timer": {
+        "Biały": 5985,
+        "Czarny": 6000
+    },
+    "current_turn": "Czarny",
+    "running": true,
+    "winner": null
+}</pre>
+        </div>
+        
+        <h3>3.4. Mechanizm promocji pionka</h3>
+        <p>
+            Gdy pionek osiągnie ostatni rząd, system wysyła zdarzenie 'promotion' do klienta.
+            Klient wyświetla interfejs do wyboru figury, a następnie wysyła żądanie POST /promote
+            z wybraną figurą ('q', 'r', 'b' lub 'n').
+        </p>
+        
+        <div class="flow-chart">
+            <h4>Sekwencja promocji pionka:</h4>
+            <pre>
+1. Gracz przesuwa pionka na ostatni rząd
+2. Serwer wykrywa warunek promocji i wysyła zdarzenie
+3. Frontend pokazuje okno wyboru figury
+4. Gracz wybiera figurę
+5. Frontend wysyła wybór do serwera
+6. Serwer aktualizuje stan gry i wysyła potwierdzenie
+            </pre>
+        </div>
+    </section>
+    
+    <section class="component">
+        <h2>4. Dokumentacja frontendu</h2>
+        
+        <h3>4.1. Struktura plików</h3>
+        <ul>
+            <li><code>index.html</code> - Główny szablon strony</li>
+            <li><code>index.js</code> - Główna logika aplikacji</li>
+            <li><code>style.css</code> - Style CSS</li>
+            <li><code>/static</code> - Zasoby statyczne (obrazy, dźwięki)</li>
+        </ul>
+        
+        <h3>4.2. Główne funkcje JavaScript</h3>
+        
+        <div class="endpoint">
+            <h3>initChessBoard(boardData)</h3>
+            <p>Inicjalizuje szachownicę w interfejsie użytkownika.</p>
+            <h4>Parametry:</h4>
+            <ul>
+                <li><code>boardData</code> - Tablica 8x8 reprezentująca stan szachownicy</li>
+            </ul>
+        </div>
+        
+        <div class="endpoint">
+            <h3>updateChessBoard(boardData)</h3>
+            <p>Aktualizuje wygląd szachownicy na podstawie nowych danych.</p>
+            <h4>Parametry:</h4>
+            <ul>
+                <li><code>boardData</code> - Tablica 8x8 reprezentująca stan szachownicy</li>
+            </ul>
+        </div>
+        
+        <div class="endpoint">
+            <h3>handleSquareClick(posx, posy)</h3>
+            <p>Obsługuje kliknięcie na pole szachownicy.</p>
+            <h4>Parametry:</h4>
+            <ul>
+                <li><code>posx</code> - Współrzędna X pola (0-7)</li>
+                <li><code>posy</code> - Współrzędna Y pola (0-7)</li>
+            </ul>
+        </div>
+        
+        <div class="endpoint">
+            <h3>executeMove(posx, posy, newPosx, newPosy)</h3>
+            <p>Wysyła żądanie wykonania ruchu do serwera.</p>
+            <h4>Parametry:</h4>
+            <ul>
+                <li><code>posx</code>, <code>posy</code> - Pozycja początkowa</li>
+                <li><code>newPosx</code>, <code>newPosy</code> - Pozycja docelowa</li>
+            </ul>
+        </div>
+        
+        <h3>4.3. Interfejs użytkownika</h3>
+        
+        <h4>4.3.1. Główne ekrany</h4>
+        <ul>
+            <li><strong>Menu główne:</strong> Wybór trybu gry, ustawienia profilu</li>
+            <li><strong>Ekran gry:</strong> Szachownica, panele informacyjne, przyciski sterujące</li>
+            <li><strong>Ekran konfiguracji:</strong> Ustawienia gry, wybór przeciwnika</li>
+            <li><strong>Okna dialogowe:</strong> Promocja pionka, komunikaty systemowe</li>
+        </ul>
+        
+        <h4>4.3.2. Elementy interfejsu</h4>
+        <table>
+            <tr>
+                <th>Element</th>
+                <th>Opis</th>
+                <th>Funkcjonalność</th>
+            </tr>
+            <tr>
+                <td>Szachownica</td>
+                <td>8x8 pól z figurami</td>
+                <td>Wyświetlanie stanu gry, obsługa ruchów</td>
+            </tr>
+            <tr>
+                <td>Panele graczy</td>
+                <td>Informacje o graczach</td>
+                <td>Wyświetlanie nazw, avatarów, czasów</td>
+            </tr>
+            <tr>
+                <td>Przyciski sterujące</td>
+                <td>Poddaj, Remis, Cofnij</td>
+                <td>Wywołanie odpowiednich akcji gry</td>
+            </tr>
+            <tr>
+                <td>Historia ruchów</td>
+                <td>Lista wykonanych ruchów</td>
+                <td>Przeglądanie przebiegu partii</td>
+            </tr>
+        </table>
+    </section>
+    
+    <section class="component">
+        <h2>5. Tryby gry</h2>
+        
+        <h3>5.1. Klasyczny</h3>
+        <p>Tradycyjne szachy ze standardowym ustawieniem początkowym.</p>
+        <ul>
+            <li>Czas: 60 minut na gracza (domyślnie)</li>
+            <li>Specyfika: Standardowe zasady FIDE</li>
+            <li>Ustawienie początkowe:
+                <pre>
+8 | r n b q k b n r
+7 | p p p p p p p p
+6 | . . . . . . . .
+5 | . . . . . . . .
+4 | . . . . . . . .
+3 | . . . . . . . .
+2 | P P P P P P P P
+1 | R N B Q K B N R
+    a b c d e f g h
+                </pre>
+            </li>
+        </ul>
+        
+        <h3>5.2. Błyskawiczny</h3>
+        <p>Szybkie szachy z krótszym czasem na partię.</p>
+        <ul>
+            <li>Czas: 1 minuta na gracza</li>
+            <li>Specyfika: Szybsze tempo gry, większy nacisk na refleks</li>
+        </ul>
+        
+        <h3>5.3. Fischer Random (Chess960)</h3>
+        <p>Wariant szachów z losowym ustawieniem figur w rzędzie początkowym.</p>
+        <ul>
+            <li>Czas: Jak w trybie klasycznym</li>
+            <li>Specyfika:
+                <ul>
+                    <li>Losowe ustawienie figur (z zachowaniem zasad Chess960)</li>
+                    <li>Król musi znajdować się między wieżami</li>
+                    <li>Goniec na polach różnego koloru</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <h3>5.4. Tryb mistrzowski</h3>
+        <p>Gra przeciwko AI uczącemu się na partiach mistrzów.</p>
+        <ul>
+            <li>Czas: Jak w trybie klasycznym</li>
+            <li>Specyfika:
+                <ul>
+                    <li>AI wykorzystuje bazy partii w formacie PGN</li>
+                    <li>Próbuje naśladować styl gry wybranego arcymistrza</li>
+                    <li>Dostępni mistrzowie zależą od załadowanych plików PGN</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+    
+    <section class="component">
+        <h2>6. Sztuczna inteligencja (ChessBot)</h2>
+        
+        <h3>6.1. Poziomy trudności</h3>
+        <table>
+            <tr>
+                <th>Poziom</th>
+                <th>Głębokość przeszukiwania</th>
+                <th>Charakterystyka</th>
+                <th>Przeciętny czas ruchu</th>
+            </tr>
+            <tr>
+                <td>Łatwy</td>
+                <td>2</td>
+                <td>Podstawowa ocena pozycji, losowe ruchy</td>
+                <td>&lt;1s</td>
+            </tr>
+            <tr>
+                <td>Średni</td>
+                <td>3</td>
+                <td>Uwzględnia więcej kombinacji, podstawowa strategia</td>
+                <td>1-3s</td>
+            </tr>
+            <tr>
+                <td>Trudny</td>
+                <td>4</td>
+                <td>Zaawansowana ocena pozycji, długoterminowa strategia</td>
+                <td>3-10s</td>
+            </tr>
+        </table>
+        
+        <h3>6.2. Algorytm minimax z przycinaniem alfa-beta</h3>
+        <p>Główny algorytm wykorzystywany przez AI do podejmowania decyzji.</p>
+        
+        <div class="flow-chart">
+            <h4>Przebieg algorytmu:</h4>
+            <pre>
+1. Generuj wszystkie możliwe ruchy dla aktualnej pozycji
+2. Dla każdego ruchu:
+   a. Wykonaj ruch na kopii szachownicy
+   b. Jeśli osiągnięto maksymalną głębokość - oceń pozycję
+   c. W przeciwnym razie - rekurencyjnie wywołaj minimax
+   d. Cofnij ruch
+3. Wybierz ruch z najlepszą oceną
+            </pre>
+        </div>
+        
+        <h3>6.3. Funkcja oceny pozycji</h3>
+        <p>Ocena pozycji opiera się na następujących czynnikach:</p>
+        <ul>
+            <li><strong>Wartość materialna:</strong> Suma wartości figur</li>
+            <li><strong>Pozycja figur:</strong> Tabele wartości pól dla różnych figur</li>
+            <li><strong>Mobilność:</strong> Liczba możliwych ruchów</li>
+            <li><strong>Kontrola centrum:</strong> Obecność w centralnych polach</li>
+            <li><strong>Bezpieczeństwo króla:</strong> Otoczenie króla, możliwość szacha</li>
+        </ul>
+        
+        <div class="note">
+            <strong>Wartości figur:</strong>
+            <ul>
+                <li>Pionek: 1 punkt</li>
+                <li>Skoczek: 3 punkty</li>
+                <li>Goniec: 3 punkty</li>
+                <li>Wieża: 5 punktów</li>
+                <li>Hetman: 10 punktów</li>
+                <li>Król: 15 punktów (w praktyce nieskończoność)</li>
+            </ul>
+        </div>
+    </section>
+    
+    <section class="component">
+        <h2>7. Instalacja i uruchomienie</h2>
+        
+        <h3>7.1. Wymagania systemowe</h3>
+        <ul>
+            <li>Python 3.7 lub nowszy</li>
+            <li>Flask 2.0+</li>
+            <li>Flask-CORS</li>
+            <li>Przeglądarka internetowa z obsługą JavaScript</li>
+        </ul>
+        
+        <h3>7.2. Instalacja zależności</h3>
+        <pre>
+# Instalacja wymaganych pakietów Pythona
+pip install flask flask-cors
+        </pre>
+        
+        <h3>7.3. Uruchomienie serwera</h3>
+        <pre>
+# Uruchomienie serwera deweloperskiego
+python webserver.py
+
+# Serwer będzie dostępny pod adresem:
+http://localhost:5000
+        </pre>
+        
+        <h3>7.4. Struktura katalogów</h3>
+        <pre>
+/static
+    /figures      # Obrazy figur szachowych
+    /profiles     # Avatary graczy
+    /soundtrack   # Muzyka i dźwięki
+/game_data
+    /pgn_games    # Bazy partii mistrzowskich
+templates
+    index.html    # Główny szablon strony
+webserver.py      # Główny plik aplikacji
+modes.py          # Implementacje trybów gry
+bot.py            # Implementacja AI
+pgn.py            # Przetwarzanie plików PGN
+utils.py          # Narzędzia pomocnicze
+        </pre>
+        
+        <div class="warning">
+            <strong>Uwaga:</strong> Przed pierwszym uruchomieniem należy upewnić się,
+            że katalog /game_data/pgn_games istnieje i zawiera pliki PGN, jeśli planuje się
+            korzystanie z trybu mistrzowskiego.
+        </div>
+    </section>
+    
+    <section class="component">
+        <h2>8. Rozwój i rozszerzenia</h2>
+        
+        <h3>8.1. Planowane funkcje</h3>
+        <ul>
+            <li><strong>System rankingowy:</strong> Punkty ELO, klasyfikacja graczy</li>
+            <li><strong>Turnieje:</strong> Organizacja turniejów szachowych</li>
+            <li><strong>Analiza partii:</strong> Narzędzia do analizy zakończonych gier</li>
+            <li><strong>Wersja mobilna:</strong> Optymalizacja dla urządzeń mobilnych</li>
+            <li><strong>Dodatkowe tryby:</strong> Szachy korespondencyjne, puzzle szachowe</li>
+        </ul>
+        
+        <h3>8.2. Wskazówki dla developerów</h3>
+        <p>Dla programistów chcących rozwijać projekt:</p>
+        <ul>
+            <li>Nowe tryby gry powinny dziedziczyć po klasie bazowej <code>Mode</code></li>
+            <li>Zmiany w interfejsie użytkownika należy testować pod kątem responsywności</li>
+            <li>Nowe endpointy API powinny zwracać spójne formaty odpowiedzi</li>
+            <li>Proponowane zmiany należy zgłaszać poprzez pull requesty</li>
+        </ul>
+        
+        <h3>8.3. Znane problemy</h3>
+        <ul>
+            <li>Ograniczona obsługa roszady w niestandardowych ustawieniach</li>
+            <li>Brak pełnej walidacji niestandardowych ustawień początkowych</li>
+            <li>Możliwość podwójnego kliknięcia podczas ruchu</li>
+        </ul>
+    </section>
+    
+    <section class="component">
+        <h2>9. Podsumowanie</h2>
+        <p>
+            Mamy nadzieję iż spodoba Wam się nasz projekt i ocenicie go jak najwyżej!
+        </p>
+        <p>
+            Pomimo wielu bugów których nie udało nam się wyeliminować w danym czasie, 
+            mamy nadzieję że docenicie naszą pracę i poświęcony czas na stworzenie tej aplikacji.
+        </p>
+    </section>
+</body>
+</html>

@@ -546,6 +546,8 @@ class Mode:
                                          if k.startswith(board_str[:32]) or
                                          k.startswith(position_key[:32])]
 
+                        print(board_str, matching_keys)
+
 
                         if matching_keys:
                             # Use the first matching key
