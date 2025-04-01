@@ -428,7 +428,7 @@ html, body {
 }
 
 #feedItem3 {
-    background-image: url('/static/feed/IMG_20240529_094828.jpg');
+    background-image: url('/static/feed/5.jpg');
 }
 
 #feedItem4 {
@@ -436,9 +436,12 @@ html, body {
 }
 
 #feedItem5 {
-    background-image: url('/static/feed/5.png');
-    color: blueviolet;
-    text-shadow: 2px 2px 1px white;
+    background-image: url('/static/feed/7.png');
+    color: black;
+}
+
+#feedItem6 {
+    background-image: url('/static/feed/6.png');
 }
 
 #loading {

@@ -46,11 +46,15 @@
         <div id="feed">
             <h2 id="feedTitle">Aktualności</h2>
             <div id="feedContent">
-                <div class="feedItem" id="feedItem0">
+                <div onclick="createPopUp('info', '🍳Problem', 'Jedyny changelog jaki jest dostępny to historia commitów na githubie...')" class="feedItem" id="feedItem0">
                     <div class="feedItemTitle">Aktualne informacje</div>
                     <div class="feedItemContent"><span id="latest_news"></span></div>
                 </div>
-                <div class="feedItem" id="feedItem1">
+                <div onclick="createPopUp('info', '⚠️Uwaga', 'Dokumentacja jest dostępna w folderze docs w repozytorium')" class="feedItem" id="feedItem5">
+                    <div class="feedItemTitle">Zobacz dokumentację</div>
+                    <div class="feedItemContent">Bardzo dobra dokumentacja</div>
+                </div>
+                <div onclick="renderSetup('bot')" class="feedItem" id="feedItem1">
                     <div class="feedItemTitle">Zagraj z SochAI</div>
                     <div class="feedItemContent">Nasza najnowsza Sztuczna Głupota</div>
                 </div>
@@ -66,9 +70,9 @@
                     <div class="feedItemTitle">Zagraj z MatiuuAI</div>
                     <div class="feedItemContent">Mądrzejszy model szachowy</div>
                 </div>
-                <div class="feedItem" id="feedItem5">
-                    <div class="feedItemTitle">Odkryj nasze inne gry</div>
-                    <div class="feedItemContent">Tworzymy ich wiele...</div>
+                <div class="feedItem" id="feedItem6">
+                    <div class="feedItemTitle">Zagraj w inne nasze gry</div>
+                    <div class="feedItemContent">Jest ich wiele</div>
                 </div>
             </div>
         </div>

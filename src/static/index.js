@@ -1077,7 +1077,7 @@ function back() {
 }
 
 
-const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song'];
+const songs = ['Ballada o Stańczyku', 'Electric Heart', 'F-Cloud Song', 'ITwist', 'Jawor', 'Serwer Patyny', 'Srochaj Anime Opening', 'ZSE Theme Song', 'I Just Know', 'Untitled', 'Szachy', 'Dance of the Game', 'Neon Reverie', 'AI Slop 1', 'AI Slop 2', 'AI Slop 3'];
 let currentSongIndex = Math.floor(Math.random() * songs.length);
 const audio = new Audio(`/static/soundtrack/${songs[currentSongIndex]}.mp3`);
 audio.loop = false;
